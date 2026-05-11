@@ -84,3 +84,24 @@
 - [x] Update footer brand statement to: "Hand-carved kitchen and home objects. Material-led, one of one. Made in Omaha, Nebraska."
 - [x] Add visible placeholder note in admin/site flagging hero image as needing replacement with real workshop photo (TODO comment in code + dimmed overlay on About page workshop image)
 - [x] Enforce voice guardrails: first person, "one of one", no em dashes, no marketing language throughout
+
+## Launch Preparation (May 11, 2026)
+- [x] Add Stripe npm packages (@stripe/stripe-js, @stripe/react-stripe-js, stripe)
+- [x] Create stripe.ts server utility for payment intent creation
+- [x] Add payment intent endpoint to tRPC routers (orders.createPaymentIntent)
+- [x] Update Checkout.tsx to integrate Stripe Elements (3-step: info → shipping → payment)
+- [x] Add STRIPE_SECRET_KEY and STRIPE_PUBLISHABLE_KEY to ENV variables
+- [x] Create .env.example with all required environment variables
+- [x] Create vercel.json for Vercel deployment configuration
+- [ ] Update README.md with deployment instructions
+- [ ] Install dependencies: `pnpm install` (or npm install)
+- [ ] Test locally: `pnpm dev`
+- [ ] Build production bundle: `pnpm build`
+- [ ] Set up Stripe webhook (configure in Stripe dashboard)
+- [ ] Configure database (point DATABASE_URL to production MySQL)
+- [ ] Deploy to hosting (Vercel recommended - see vercel.json)
+- [ ] Point www.mrtoddsworkshop.com to hosting platform via Cloudflare
+- [ ] Test end-to-end: Add item → Checkout → Stripe payment form
+- [ ] Switch Stripe from test mode to live mode (update keys)
+- [ ] Monitor orders in admin dashboard
+- [ ] Set up email notifications (optional but recommended)

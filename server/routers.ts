@@ -29,11 +29,13 @@ import {
   getCartSession,
   upsertCartSession,
   updateOrderStatus,
+  updateOrderPaymentStatus,
   updateProduct,
   updateTradeShow,
   updateWoodBlank,
 } from "./db";
 import { storagePut } from "./storage";
+import { createPaymentIntent } from "./stripe";
 
 // ─── Admin guard ──────────────────────────────────────────────────────────────
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -287,6 +289,55 @@ export const appRouter = router({
         }
 
         return { orderNumber, orderId: order.id };
+      }),
+
+    createPaymentIntent: publicProcedure
+      .input(z.object({
+        orderId: z.number(),
+        orderNumber: z.string(),
+        totalAmount: z.number().int().min(1),
+        customerEmail: z.string().email(),
+        customerName: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          const paymentIntent = await createPaymentIntent({
+            amount: input.totalAmount,
+            customerEmail: input.customerEmail,
+            customerName: input.customerName,
+            orderId: input.orderNumber,
+            metadata: {
+              orderId: String(input.orderId),
+            },
+          });
+
+          return {
+            clientSecret: paymentIntent.client_secret,
+            paymentIntentId: paymentIntent.id,
+          };
+        } catch (error) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to create payment intent",
+          });
+        }
+      }),
+
+    confirmPayment: publicProcedure
+      .input(z.object({
+        orderId: z.number(),
+        paymentIntentId: z.string(),
+      }))
+      .mutation(async ({ input }) => {
+        try {
+          await updateOrderPaymentStatus(input.orderId, "PAID");
+          return { success: true };
+        } catch (error) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to confirm payment",
+          });
+        }
       }),
   }),
 
