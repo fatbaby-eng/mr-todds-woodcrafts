@@ -49,11 +49,21 @@ export default function Checkout() {
   const shippingCost = subtotal >= 7500 ? 0 : 895; // free over $75
   const total = subtotal + shippingCost;
 
+  const createStripeSession = trpc.checkout.createStripeSession.useMutation();
+
   const placeOrder = trpc.orders.create.useMutation({
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       setOrderNumber(data.orderNumber);
-      clearCart();
-      setStep("review");
+      try {
+        const session = await createStripeSession.mutateAsync({
+          orderNumber: data.orderNumber,
+        });
+        clearCart();
+        window.location.href = session.url;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Stripe session failed";
+        toast.error(`Could not start checkout: ${msg}`);
+      }
     },
     onError: () => {
       toast.error("Failed to place order. Please try again.");
@@ -369,10 +379,10 @@ export default function Checkout() {
 
                 <div className="mt-6 p-4 bg-[#F5F0EB] rounded border border-[#D7CCC8] text-sm text-[#5D4037]" style={{ fontFamily: "Lora, serif" }}>
                   <p className="font-semibold text-[#3E2723] mb-1" style={{ fontFamily: "Cinzel, serif" }}>
-                    Note on Payment
+                    Payment
                   </p>
                   <p>
-                    This site currently processes orders manually. After placing your order, Todd will contact you within 24 hours to arrange payment via Venmo, PayPal, or check.
+                    You&apos;ll be redirected to Stripe&apos;s secure checkout to complete your payment. Cards are processed by Stripe and never touch our servers.
                   </p>
                 </div>
 
@@ -384,11 +394,13 @@ export default function Checkout() {
                     }
                     handlePlaceOrder();
                   }}
-                  disabled={placeOrder.isPending}
+                  disabled={placeOrder.isPending || createStripeSession.isPending}
                   className="mt-6 w-full py-3.5 bg-[#3E2723] text-[#D7CCC8] font-semibold text-sm tracking-widest uppercase rounded hover:bg-[#5D4037] transition-colors disabled:opacity-60"
                   style={{ fontFamily: "Inter, sans-serif" }}
                 >
-                  {placeOrder.isPending ? "Placing Order..." : "Place Order"}
+                  {placeOrder.isPending || createStripeSession.isPending
+                    ? "Redirecting to Stripe…"
+                    : "Pay with Stripe"}
                 </button>
               </div>
             )}

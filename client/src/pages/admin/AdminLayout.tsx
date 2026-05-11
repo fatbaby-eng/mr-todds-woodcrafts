@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
-import { getLoginUrl } from "@/const";
+import { ADMIN_LOGIN_PATH } from "@/const";
 
 const NAV = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
@@ -44,13 +44,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <p className="text-[#8D6E63] mb-6" style={{ fontFamily: "Inter, sans-serif" }}>
             Please sign in to access the admin panel.
           </p>
-          <a
-            href={getLoginUrl()}
+          <Link
+            href={ADMIN_LOGIN_PATH}
             className="inline-block px-8 py-3 bg-[#C9A227] text-[#1A1008] font-semibold text-sm tracking-widest uppercase rounded hover:bg-[#D4B03A] transition-colors"
             style={{ fontFamily: "Inter, sans-serif" }}
           >
             Sign In
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -147,7 +147,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             Store
           </Link>
           <button
-            onClick={() => logout()}
+            onClick={async () => {
+              await logout();
+              window.location.href = ADMIN_LOGIN_PATH;
+            }}
             className="flex-1 flex items-center justify-center gap-1 px-2 py-1.5 text-xs text-[#8D6E63] hover:text-red-400 border border-[#2D1A0E] rounded hover:border-red-900 transition-colors"
             style={{ fontFamily: "Inter, sans-serif" }}
           >

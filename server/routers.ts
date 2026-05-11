@@ -3,6 +3,8 @@ import { notifyOwner } from "./_core/notification";
 import { z } from "zod";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
+import { ENV } from "./_core/env";
+import { getStripeClient } from "./_core/stripe";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import {
@@ -417,6 +419,88 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         await upsertCartSession(input.sessionId, input.items);
         return { success: true };
+      }),
+  }),
+
+  // ─── Stripe Checkout ──────────────────────────────────────────────────────
+  checkout: router({
+    createStripeSession: publicProcedure
+      .input(z.object({ orderNumber: z.string() }))
+      .mutation(async ({ input, ctx }) => {
+        const order = await getOrderByNumber(input.orderNumber);
+        if (!order) {
+          throw new TRPCError({ code: "NOT_FOUND", message: "Order not found" });
+        }
+        const items = await getOrderItems(order.id);
+        if (items.length === 0) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Order has no items",
+          });
+        }
+
+        const forwardedProto = ctx.req.headers["x-forwarded-proto"];
+        const proto = Array.isArray(forwardedProto)
+          ? forwardedProto[0]
+          : (forwardedProto ?? "").split(",")[0] || ctx.req.protocol;
+        const host = ctx.req.headers.host;
+        const baseUrl =
+          ENV.baseUrl ||
+          (host ? `${proto || "https"}://${host}` : "");
+        if (!baseUrl) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "BASE_URL not configured",
+          });
+        }
+
+        const stripe = getStripeClient();
+        const lineItems = items.map((item) => ({
+          quantity: item.quantity,
+          price_data: {
+            currency: "usd",
+            unit_amount: item.price,
+            product_data: {
+              name: item.productName,
+              ...(item.imageUrl &&
+              /^https?:\/\//.test(item.imageUrl)
+                ? { images: [item.imageUrl] }
+                : {}),
+            },
+          },
+        }));
+
+        if (order.shippingCost > 0) {
+          lineItems.push({
+            quantity: 1,
+            price_data: {
+              currency: "usd",
+              unit_amount: order.shippingCost,
+              product_data: { name: "Shipping" },
+            },
+          });
+        }
+
+        const session = await stripe.checkout.sessions.create({
+          mode: "payment",
+          line_items: lineItems,
+          customer_email: order.customerEmail,
+          success_url: `${baseUrl}/order/${order.orderNumber}?stripe=success`,
+          cancel_url: `${baseUrl}/cart`,
+          metadata: {
+            orderId: String(order.id),
+            orderNumber: order.orderNumber,
+          },
+        });
+
+        if (!session.url) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Stripe did not return a checkout URL",
+          });
+        }
+
+        return { url: session.url };
       }),
   }),
 
