@@ -1,6 +1,7 @@
 import { trpc } from "@/lib/trpc";
 import { useState } from "react";
 import { X, ChevronDown } from "lucide-react";
+import { PAYMENT_METHOD_LABELS } from "@shared/orders";
 import AdminLayout from "./AdminLayout";
 import { toast } from "sonner";
 
@@ -82,7 +83,7 @@ export default function AdminOrders() {
               <table className="w-full text-sm" style={{ fontFamily: "Inter, sans-serif" }}>
                 <thead>
                   <tr className="border-b border-[#2D1A0E]">
-                    {["Order #", "Customer", "Date", "Items", "Total", "Status", ""].map((h) => (
+                    {["Order #", "Customer", "Date", "Items", "Total", "Payment", "Status", ""].map((h) => (
                       <th key={h} className="px-4 py-3 text-left text-xs font-semibold tracking-widest uppercase text-[#8D6E63]">
                         {h}
                       </th>
@@ -109,6 +110,9 @@ export default function AdminOrders() {
                       <td className="px-4 py-3 text-[#8D6E63]">—</td>
                       <td className="px-4 py-3 text-[#F5F0EB] font-semibold">
                         {formatPrice(order.totalAmount)}
+                      </td>
+                      <td className="px-4 py-3 text-[#8D6E63]">
+                        {PAYMENT_METHOD_LABELS[order.paymentMethod as keyof typeof PAYMENT_METHOD_LABELS] ?? order.paymentMethod}
                       </td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${STATUS_COLORS[order.status] ?? "bg-[#2D1A0E] text-[#8D6E63] border-[#2D1A0E]"}`}>
@@ -174,20 +178,43 @@ export default function AdminOrders() {
                       <p className="text-sm text-[#8D6E63]" style={{ fontFamily: "Inter, sans-serif" }}>{orderDetail.customerPhone}</p>
                     )}
                   </div>
-                  {shippingAddr && (
-                    <div>
-                      <p className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-2" style={{ fontFamily: "Inter, sans-serif" }}>
-                        Ship To
-                      </p>
-                      <p className="text-sm text-[#F5F0EB]" style={{ fontFamily: "Inter, sans-serif" }}>{shippingAddr.line1}</p>
-                      {shippingAddr.line2 && <p className="text-sm text-[#F5F0EB]" style={{ fontFamily: "Inter, sans-serif" }}>{shippingAddr.line2}</p>}
-                      <p className="text-sm text-[#F5F0EB]" style={{ fontFamily: "Inter, sans-serif" }}>
-                        {shippingAddr.city}, {shippingAddr.state} {shippingAddr.zip}
-                      </p>
-                      <p className="text-sm text-[#8D6E63]" style={{ fontFamily: "Inter, sans-serif" }}>{shippingAddr.country}</p>
-                    </div>
-                  )}
+                  <div>
+                    <p className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-2" style={{ fontFamily: "Inter, sans-serif" }}>
+                      Payment
+                    </p>
+                    <p className="text-sm text-[#F5F0EB]" style={{ fontFamily: "Inter, sans-serif" }}>
+                      {PAYMENT_METHOD_LABELS[orderDetail.paymentMethod as keyof typeof PAYMENT_METHOD_LABELS] ?? orderDetail.paymentMethod}
+                    </p>
+                    <p className="text-sm text-[#8D6E63]" style={{ fontFamily: "Inter, sans-serif" }}>
+                      Status: {orderDetail.paymentStatus}
+                    </p>
+                  </div>
                 </div>
+
+                {shippingAddr && (
+                  <div>
+                    <p className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-2" style={{ fontFamily: "Inter, sans-serif" }}>
+                      Ship To
+                    </p>
+                    <p className="text-sm text-[#F5F0EB]" style={{ fontFamily: "Inter, sans-serif" }}>{shippingAddr.line1}</p>
+                    {shippingAddr.line2 && <p className="text-sm text-[#F5F0EB]" style={{ fontFamily: "Inter, sans-serif" }}>{shippingAddr.line2}</p>}
+                    <p className="text-sm text-[#F5F0EB]" style={{ fontFamily: "Inter, sans-serif" }}>
+                      {shippingAddr.city}, {shippingAddr.state} {shippingAddr.zip}
+                    </p>
+                    <p className="text-sm text-[#8D6E63]" style={{ fontFamily: "Inter, sans-serif" }}>{shippingAddr.country}</p>
+                  </div>
+                )}
+
+                {orderDetail.notes && (
+                  <div>
+                    <p className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-2" style={{ fontFamily: "Inter, sans-serif" }}>
+                      Customer Notes
+                    </p>
+                    <p className="text-sm text-[#F5F0EB] whitespace-pre-wrap" style={{ fontFamily: "Inter, sans-serif" }}>
+                      {orderDetail.notes}
+                    </p>
+                  </div>
+                )}
 
                 {/* Items */}
                 <div>

@@ -107,6 +107,18 @@ export default function Contact() {
                 </p>
               </div>
 
+              <div className="bg-white border border-[#D7CCC8] rounded-lg p-5">
+                <h3
+                  className="font-cinzel text-[#3E2723] text-sm mb-2"
+                  style={{ fontFamily: "Cinzel, serif" }}
+                >
+                  Ordering & Payment
+                </h3>
+                <p className="text-xs text-[#5D4037] leading-relaxed" style={{ fontFamily: "Lora, serif" }}>
+                  Ready to buy a listed piece? Add it to your cart and check out online. Todd will follow up with a Venmo request within 24 hours. Use this form for custom orders, wholesale inquiries, or questions before you buy.
+                </p>
+              </div>
+
 
             </div>
 

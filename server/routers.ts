@@ -2,6 +2,11 @@ import { TRPCError } from "@trpc/server";
 import { notifyOwner } from "./_core/notification";
 import { z } from "zod";
 import { COOKIE_NAME } from "@shared/const";
+import {
+  DEFAULT_PAYMENT_METHOD,
+  PAYMENT_METHOD_LABELS,
+  PAYMENT_METHODS,
+} from "@shared/orders";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
@@ -53,6 +58,8 @@ const cartItemSchema = z.object({
   woodType: z.string().optional(),
   slug: z.string(),
 });
+
+const paymentMethodSchema = z.enum(PAYMENT_METHODS);
 
 export const appRouter = router({
   system: systemRouter,
@@ -222,7 +229,7 @@ export const appRouter = router({
           zip: z.string(),
           country: z.string(),
         }),
-        paymentMethod: z.enum(["STRIPE", "PAYPAL", "CASH", "CHECK"]).default("STRIPE"),
+        paymentMethod: paymentMethodSchema.default(DEFAULT_PAYMENT_METHOD),
         items: z.array(z.object({
           productId: z.number().optional(),
           productName: z.string(),
@@ -284,6 +291,32 @@ export const appRouter = router({
               });
             }
           }
+        }
+
+        const itemSummary = input.items
+          .map((item) => `${item.quantity}x ${item.productName} (${((item.price * item.quantity) / 100).toFixed(2)})`)
+          .join("\n");
+
+        try {
+          await notifyOwner({
+            title: `New order ${orderNumber} (${PAYMENT_METHOD_LABELS[input.paymentMethod]})`,
+            content: [
+              `Order: ${orderNumber}`,
+              `Customer: ${input.customerName} <${input.customerEmail}>`,
+              input.customerPhone ? `Phone: ${input.customerPhone}` : "",
+              `Payment: ${PAYMENT_METHOD_LABELS[input.paymentMethod]}`,
+              `Total: $${(totalAmount / 100).toFixed(2)}`,
+              `Shipping: ${input.shippingAddress.line1}, ${input.shippingAddress.city}, ${input.shippingAddress.state} ${input.shippingAddress.zip}, ${input.shippingAddress.country}`,
+              input.notes ? `Notes: ${input.notes}` : "",
+              "",
+              "Items:",
+              itemSummary,
+            ]
+              .filter(Boolean)
+              .join("\n"),
+          });
+        } catch (error) {
+          console.warn(`[Orders] Failed to send owner notification for ${orderNumber}:`, error);
         }
 
         return { orderNumber, orderId: order.id };

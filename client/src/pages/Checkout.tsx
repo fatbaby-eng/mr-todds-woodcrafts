@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Link, useLocation } from "wouter";
 import { ArrowLeft, Lock, ShoppingBag, Check } from "lucide-react";
 import { toast } from "sonner";
+import { DEFAULT_PAYMENT_METHOD, PAYMENT_METHOD_LABELS } from "@shared/orders";
 
 type Step = "info" | "shipping" | "review";
 
@@ -29,6 +30,9 @@ const US_STATES = [
   "NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT","VT",
   "VA","WA","WV","WI","WY",
 ];
+
+const PAYMENT_METHOD = DEFAULT_PAYMENT_METHOD;
+const PAYMENT_LABEL = PAYMENT_METHOD_LABELS[PAYMENT_METHOD];
 
 export default function Checkout() {
   const { items, subtotal, clearCart } = useCart();
@@ -81,6 +85,7 @@ export default function Checkout() {
         productSlug: i.slug,
         imageUrl: i.imageUrl,
       })),
+      paymentMethod: PAYMENT_METHOD,
       shippingCost,
     });
   };
@@ -116,7 +121,7 @@ export default function Checkout() {
             Order Confirmed!
           </h1>
           <p className="text-[#5D4037] mb-2" style={{ fontFamily: "Lora, serif" }}>
-            Thank you for your order. Todd will begin work on your pieces shortly.
+            Thank you for your order. Your pieces are now reserved pending {PAYMENT_LABEL} payment.
           </p>
           <div className="bg-white border border-[#D7CCC8] rounded-lg p-6 my-6 text-left">
             <p className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-1" style={{ fontFamily: "Inter, sans-serif" }}>
@@ -126,11 +131,22 @@ export default function Checkout() {
               #{orderNumber}
             </p>
             <p className="text-sm text-[#8D6E63] mt-3" style={{ fontFamily: "Inter, sans-serif" }}>
-              A confirmation email will be sent to <strong>{customer.email}</strong>.
+              Todd will send a {PAYMENT_LABEL} request to <strong>{customer.email}</strong>
+              {customer.phone ? <> and follow up at <strong>{customer.phone}</strong></> : null} within 24 hours.
             </p>
             <p className="text-sm text-[#8D6E63] mt-2" style={{ fontFamily: "Inter, sans-serif" }}>
-              Estimated shipping: 3–7 business days (made-to-order pieces: 2–4 weeks).
+              Production begins after payment is received. Estimated shipping: 3-7 business days (made-to-order pieces: 2-4 weeks).
             </p>
+          </div>
+          <div className="bg-[#3E2723] text-[#D7CCC8] rounded-lg p-5 mb-6 text-left">
+            <p className="text-xs font-semibold tracking-widest uppercase text-[#C9A227] mb-2" style={{ fontFamily: "Inter, sans-serif" }}>
+              What happens next
+            </p>
+            <ol className="space-y-2 text-sm list-decimal list-inside" style={{ fontFamily: "Lora, serif" }}>
+              <li>Save order #{orderNumber} for your records.</li>
+              <li>Todd will send your {PAYMENT_LABEL} request for the exact order total within 24 hours.</li>
+              <li>Once payment is received, your order moves into carving and shipping.</li>
+            </ol>
           </div>
           <Link
             href="/shop"
@@ -369,12 +385,15 @@ export default function Checkout() {
 
                 <div className="mt-6 p-4 bg-[#F5F0EB] rounded border border-[#D7CCC8] text-sm text-[#5D4037]" style={{ fontFamily: "Lora, serif" }}>
                   <p className="font-semibold text-[#3E2723] mb-1" style={{ fontFamily: "Cinzel, serif" }}>
-                    Note on Payment
+                    {PAYMENT_LABEL} Checkout
                   </p>
                   <p>
-                    This site currently processes orders manually. After placing your order, Todd will contact you within 24 hours to arrange payment via Venmo, PayPal, or check.
+                    No card is charged today. Submit your order to reserve the piece, and Todd will send a {PAYMENT_LABEL} request within 24 hours for the exact order total shown here.
                   </p>
                 </div>
+                <p className="mt-4 text-xs text-[#8D6E63]" style={{ fontFamily: "Inter, sans-serif" }}>
+                  By placing your order, you are reserving handmade work that begins once payment is received.
+                </p>
 
                 <button
                   onClick={() => {
@@ -388,7 +407,7 @@ export default function Checkout() {
                   className="mt-6 w-full py-3.5 bg-[#3E2723] text-[#D7CCC8] font-semibold text-sm tracking-widest uppercase rounded hover:bg-[#5D4037] transition-colors disabled:opacity-60"
                   style={{ fontFamily: "Inter, sans-serif" }}
                 >
-                  {placeOrder.isPending ? "Placing Order..." : "Place Order"}
+                  {placeOrder.isPending ? "Submitting Order..." : `Reserve Order & Get ${PAYMENT_LABEL} Request`}
                 </button>
               </div>
             )}
@@ -447,6 +466,9 @@ export default function Checkout() {
                   <span>Total</span>
                   <span>{formatPrice(total)}</span>
                 </div>
+                <p className="text-xs text-[#8D6E63] pt-2" style={{ fontFamily: "Inter, sans-serif" }}>
+                  Payment collected separately by {PAYMENT_LABEL} after checkout.
+                </p>
               </div>
             </div>
           </div>

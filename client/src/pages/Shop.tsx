@@ -70,13 +70,19 @@ export default function Shop() {
             The Collection
           </h1>
           <p className="text-[#8D6E63] mt-4 max-w-lg mx-auto" style={{ fontFamily: "Lora, serif" }}>
-            Every piece carved by hand from sustainably sourced hardwoods. Browse the full collection below.
+            Every piece is carved by hand from sustainably sourced hardwoods. Reserve online now and Todd will send a Venmo request after checkout.
           </p>
         </div>
       </div>
 
       <div className="bg-[#F5F0EB] min-h-screen py-10">
         <div className="container">
+          <div className="mb-6 rounded-lg border border-[#D7CCC8] bg-white px-5 py-4">
+            <p className="text-sm text-[#5D4037]" style={{ fontFamily: "Lora, serif" }}>
+              Ordering is live. Your checkout reserves the piece, shipping is calculated here, and payment is collected by Venmo within 24 hours of your order.
+            </p>
+          </div>
+
           {/* Search + Filter bar */}
           <div className="flex flex-col sm:flex-row gap-3 mb-6">
             <div className="relative flex-1">

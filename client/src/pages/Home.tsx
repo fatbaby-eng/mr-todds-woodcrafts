@@ -52,6 +52,11 @@ export default function Home() {
           >
             Measured in Grain and Grace
           </p>
+          <div className="max-w-2xl mx-auto mb-10 rounded-lg border border-[#C9A227]/40 bg-[#3E2723]/55 px-5 py-4">
+            <p className="text-[#F5F0EB] text-sm md:text-base" style={{ fontFamily: "Lora, serif" }}>
+              Now taking online orders at mrtoddsworkshop.com. Reserve your piece at checkout and Todd will send a Venmo request within 24 hours.
+            </p>
+          </div>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/shop"
@@ -196,7 +201,7 @@ export default function Home() {
             Free Shipping on Orders Over $75
           </h2>
           <p className="text-[#5D4037] mb-8 max-w-md mx-auto" style={{ fontFamily: "Lora, serif" }}>
-            Every order ships carefully packaged from Omaha, Nebraska. Made-to-order pieces ship within 2 weeks.
+            Every order ships carefully packaged from Omaha, Nebraska. Checkout reserves your piece today and payment is collected by Venmo after the order is placed.
           </p>
           <Link
             href="/shop"

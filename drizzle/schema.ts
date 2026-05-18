@@ -9,6 +9,7 @@ import {
   varchar,
   decimal,
 } from "drizzle-orm/mysql-core";
+import { PAYMENT_METHODS, DEFAULT_PAYMENT_METHOD } from "../shared/orders";
 
 // ─── Users ────────────────────────────────────────────────────────────────────
 export const users = mysqlTable("users", {
@@ -67,7 +68,7 @@ export const orders = mysqlTable("orders", {
   }>().notNull(),
   status: mysqlEnum("status", ["PENDING", "CONFIRMED", "CARVING", "FINISHED", "SHIPPED", "DELIVERED", "CANCELLED"]).notNull().default("PENDING"),
   paymentStatus: mysqlEnum("paymentStatus", ["PENDING", "PAID", "REFUNDED"]).notNull().default("PENDING"),
-  paymentMethod: mysqlEnum("paymentMethod", ["STRIPE", "PAYPAL", "CASH", "CHECK"]).notNull().default("STRIPE"),
+  paymentMethod: mysqlEnum("paymentMethod", PAYMENT_METHODS).notNull().default(DEFAULT_PAYMENT_METHOD),
   totalAmount: int("totalAmount").notNull(), // cents
   shippingCost: int("shippingCost").notNull().default(0), // cents
   taxAmount: int("taxAmount").notNull().default(0), // cents
