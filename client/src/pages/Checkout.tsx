@@ -2,8 +2,9 @@ import { useCart } from "@/contexts/CartContext";
 import { trpc } from "@/lib/trpc";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, Lock, ShoppingBag, Check } from "lucide-react";
+import { ArrowLeft, ShoppingBag, Check } from "lucide-react";
 import { toast } from "sonner";
+import VenmoPaymentInfo from "@/components/VenmoPaymentInfo";
 
 type Step = "info" | "shipping" | "review";
 
@@ -131,6 +132,27 @@ export default function Checkout() {
             <p className="text-sm text-[#8D6E63] mt-2" style={{ fontFamily: "Inter, sans-serif" }}>
               Estimated shipping: 3–7 business days (made-to-order pieces: 2–4 weeks).
             </p>
+            <div className="mt-5 pt-5 border-t border-[#D7CCC8] text-left">
+              <p className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-2" style={{ fontFamily: "Inter, sans-serif" }}>
+                Pay with Venmo
+              </p>
+              <p className="text-sm text-[#5D4037] mb-2" style={{ fontFamily: "Lora, serif" }}>
+                When you pay on Venmo, include your order number in the payment note so we can match your payment:
+              </p>
+              <p
+                className="font-cinzel text-lg text-[#3E2723] select-all"
+                style={{ fontFamily: "Cinzel, serif" }}
+              >
+                #{orderNumber}
+              </p>
+              <p className="text-sm text-[#8D6E63] mt-3" style={{ fontFamily: "Inter, sans-serif" }}>
+                If you have not received payment instructions within 24 hours, check your spam folder or email Todd at{" "}
+                <a href="mailto:todd@mrtodds.com" className="text-[#C9A227] hover:underline">
+                  todd@mrtodds.com
+                </a>
+                .
+              </p>
+            </div>
           </div>
           <Link
             href="/shop"
@@ -154,9 +176,8 @@ export default function Checkout() {
               Mr. Todd's Woodcrafts
             </span>
           </Link>
-          <div className="flex items-center gap-1 text-[#8D6E63] text-xs" style={{ fontFamily: "Inter, sans-serif" }}>
-            <Lock className="w-3.5 h-3.5" />
-            Secure Checkout
+          <div className="text-[#8D6E63] text-xs" style={{ fontFamily: "Inter, sans-serif" }}>
+            Checkout · Venmo payment after order
           </div>
         </div>
       </div>
@@ -367,13 +388,11 @@ export default function Checkout() {
                   </div>
                 </div>
 
-                <div className="mt-6 p-4 bg-[#F5F0EB] rounded border border-[#D7CCC8] text-sm text-[#5D4037]" style={{ fontFamily: "Lora, serif" }}>
-                  <p className="font-semibold text-[#3E2723] mb-1" style={{ fontFamily: "Cinzel, serif" }}>
-                    Note on Payment
+                <div className="mt-6 p-4 bg-[#F5F0EB] rounded border border-[#D7CCC8]">
+                  <p className="font-semibold text-[#3E2723] mb-3 text-sm" style={{ fontFamily: "Cinzel, serif" }}>
+                    Payment (Venmo)
                   </p>
-                  <p>
-                    This site currently processes orders manually. After placing your order, Todd will contact you within 24 hours to arrange payment via Venmo, PayPal, or check.
-                  </p>
+                  <VenmoPaymentInfo />
                 </div>
 
                 <button

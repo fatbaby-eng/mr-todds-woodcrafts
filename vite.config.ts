@@ -150,7 +150,31 @@ function vitePluginManusDebugCollector(): Plugin {
   };
 }
 
-const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
+/** Drops the Umami snippet when env is unset; otherwise substitutes values (avoids broken script src in builds). */
+function optionalUmamiScript(): Plugin {
+  return {
+    name: "optional-umami-script",
+    transformIndexHtml(html) {
+      const endpoint = process.env.VITE_ANALYTICS_ENDPOINT?.trim();
+      const websiteId = process.env.VITE_ANALYTICS_WEBSITE_ID?.trim();
+      if (!endpoint || !websiteId) {
+        return html.replace(/\n\s*<script[\s\S]*?%VITE_ANALYTICS[\s\S]*?<\/script>\s*\n?/m, "\n");
+      }
+      return html
+        .replaceAll("%VITE_ANALYTICS_ENDPOINT%", endpoint)
+        .replaceAll("%VITE_ANALYTICS_WEBSITE_ID%", websiteId);
+    },
+  };
+}
+
+const plugins = [
+  optionalUmamiScript(),
+  react(),
+  tailwindcss(),
+  jsxLocPlugin(),
+  vitePluginManusRuntime(),
+  vitePluginManusDebugCollector(),
+];
 
 export default defineConfig({
   plugins,
@@ -178,6 +202,8 @@ export default defineConfig({
       ".manusvm.computer",
       "localhost",
       "127.0.0.1",
+      "mrtoddsworkshop.com",
+      "www.mrtoddsworkshop.com",
     ],
     fs: {
       strict: true,

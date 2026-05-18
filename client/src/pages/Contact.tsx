@@ -1,7 +1,8 @@
 import { trpc } from "@/lib/trpc";
 import { useState } from "react";
-import { Mail, MapPin, Clock, Send, Check } from "lucide-react";
+import { Mail, MapPin, Clock, Send, Check, Wallet } from "lucide-react";
 import PublicLayout from "@/components/PublicLayout";
+import VenmoPaymentInfo from "@/components/VenmoPaymentInfo";
 import { toast } from "sonner";
 
 export default function Contact() {
@@ -67,6 +68,17 @@ export default function Contact() {
                       <a href="mailto:todd@mrtodds.com" className="text-sm text-[#3E2723] hover:text-[#C9A227] transition-colors" style={{ fontFamily: "Inter, sans-serif" }}>
                         todd@mrtodds.com
                       </a>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <Wallet className="w-5 h-5 text-[#C9A227] mt-0.5 flex-shrink-0" strokeWidth={1.5} />
+                    <div>
+                      <p className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-0.5" style={{ fontFamily: "Inter, sans-serif" }}>
+                        Shop payments
+                      </p>
+                      <div className="text-sm text-[#3E2723]" style={{ fontFamily: "Inter, sans-serif" }}>
+                        <VenmoPaymentInfo mode="explainer" compact />
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
