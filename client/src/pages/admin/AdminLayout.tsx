@@ -6,7 +6,6 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
-import { getLoginUrl } from "@/const";
 
 const NAV = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
@@ -45,7 +44,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             Please sign in to access the admin panel.
           </p>
           <a
-            href={getLoginUrl()}
+            href="/api/admin/login"
             className="inline-block px-8 py-3 bg-[#C9A227] text-[#1A1008] font-semibold text-sm tracking-widest uppercase rounded hover:bg-[#D4B03A] transition-colors"
             style={{ fontFamily: "Inter, sans-serif" }}
           >

@@ -67,7 +67,7 @@ export const orders = mysqlTable("orders", {
   }>().notNull(),
   status: mysqlEnum("status", ["PENDING", "CONFIRMED", "CARVING", "FINISHED", "SHIPPED", "DELIVERED", "CANCELLED"]).notNull().default("PENDING"),
   paymentStatus: mysqlEnum("paymentStatus", ["PENDING", "PAID", "REFUNDED"]).notNull().default("PENDING"),
-  paymentMethod: mysqlEnum("paymentMethod", ["STRIPE", "PAYPAL", "CASH", "CHECK"]).notNull().default("STRIPE"),
+  paymentMethod: mysqlEnum("paymentMethod", ["VENMO", "PAYPAL", "CASH", "CHECK", "STRIPE"]).notNull().default("VENMO"),
   totalAmount: int("totalAmount").notNull(), // cents
   shippingCost: int("shippingCost").notNull().default(0), // cents
   taxAmount: int("taxAmount").notNull().default(0), // cents

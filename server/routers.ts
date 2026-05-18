@@ -222,7 +222,7 @@ export const appRouter = router({
           zip: z.string(),
           country: z.string(),
         }),
-        paymentMethod: z.enum(["STRIPE", "PAYPAL", "CASH", "CHECK"]).default("STRIPE"),
+        paymentMethod: z.enum(["VENMO", "PAYPAL", "CASH", "CHECK", "STRIPE"]).default("VENMO"),
         items: z.array(z.object({
           productId: z.number().optional(),
           productName: z.string(),

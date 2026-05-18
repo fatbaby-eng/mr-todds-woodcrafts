@@ -116,7 +116,7 @@ export default function Checkout() {
             Order Confirmed!
           </h1>
           <p className="text-[#5D4037] mb-2" style={{ fontFamily: "Lora, serif" }}>
-            Thank you for your order. Todd will begin work on your pieces shortly.
+            Thank you for your order. Todd will reach out shortly to finalize payment.
           </p>
           <div className="bg-white border border-[#D7CCC8] rounded-lg p-6 my-6 text-left">
             <p className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-1" style={{ fontFamily: "Inter, sans-serif" }}>
@@ -128,7 +128,15 @@ export default function Checkout() {
             <p className="text-sm text-[#8D6E63] mt-3" style={{ fontFamily: "Inter, sans-serif" }}>
               A confirmation email will be sent to <strong>{customer.email}</strong>.
             </p>
-            <p className="text-sm text-[#8D6E63] mt-2" style={{ fontFamily: "Inter, sans-serif" }}>
+            <div className="mt-4 p-3 bg-[#F5F0EB] rounded border border-[#D7CCC8]">
+              <p className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-1" style={{ fontFamily: "Inter, sans-serif" }}>
+                Next Step: Payment
+              </p>
+              <p className="text-sm text-[#5D4037]" style={{ fontFamily: "Lora, serif" }}>
+                Todd will send a Venmo request within 24 hours, or you can pay directly on Venmo: <strong>@MrToddsWoodcrafts</strong>. Include your order number in the note.
+              </p>
+            </div>
+            <p className="text-sm text-[#8D6E63] mt-3" style={{ fontFamily: "Inter, sans-serif" }}>
               Estimated shipping: 3–7 business days (made-to-order pieces: 2–4 weeks).
             </p>
           </div>
@@ -369,10 +377,10 @@ export default function Checkout() {
 
                 <div className="mt-6 p-4 bg-[#F5F0EB] rounded border border-[#D7CCC8] text-sm text-[#5D4037]" style={{ fontFamily: "Lora, serif" }}>
                   <p className="font-semibold text-[#3E2723] mb-1" style={{ fontFamily: "Cinzel, serif" }}>
-                    Note on Payment
+                    Payment via Venmo
                   </p>
                   <p>
-                    This site currently processes orders manually. After placing your order, Todd will contact you within 24 hours to arrange payment via Venmo, PayPal, or check.
+                    After placing your order, Todd will send you a Venmo payment request within 24 hours. You can also send payment directly on Venmo to <strong>@MrToddsWoodcrafts</strong>. Your order will be confirmed once payment is received.
                   </p>
                 </div>
 
