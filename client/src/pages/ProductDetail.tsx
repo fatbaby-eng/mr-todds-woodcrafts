@@ -34,9 +34,10 @@ export default function ProductDetail() {
   const handleAddToCart = () => {
     if (!product) return;
     const images = Array.isArray(product.images) ? product.images : [];
+    const itemQuantity = product.status === "IN_STOCK" ? Math.min(quantity, product.quantity) : quantity;
     addItem({
       productId: product.id,
-      quantity,
+      quantity: itemQuantity,
       price: product.price,
       name: product.name,
       imageUrl: images[0],
@@ -85,7 +86,10 @@ export default function ProductDetail() {
   }
 
   const images: string[] = Array.isArray(product.images) ? product.images : [];
-  const canBuy = product.status !== "SOLD_OUT" && product.status !== "RETIRED";
+  const canBuy =
+    product.status === "MADE_TO_ORDER" ||
+    (product.status === "IN_STOCK" && product.quantity > 0);
+  const maxQuantity = product.status === "IN_STOCK" ? product.quantity : undefined;
   const relatedFiltered = related?.filter((p) => p.id !== product.id).slice(0, 4) ?? [];
 
   return (
@@ -228,8 +232,9 @@ export default function ProductDetail() {
                         {quantity}
                       </span>
                       <button
-                        onClick={() => setQuantity((q) => q + 1)}
-                        className="px-3 py-2 text-[#5D4037] hover:bg-[#F5F0EB] transition-colors"
+                        onClick={() => setQuantity((q) => maxQuantity ? Math.min(maxQuantity, q + 1) : q + 1)}
+                        disabled={maxQuantity !== undefined && quantity >= maxQuantity}
+                        className="px-3 py-2 text-[#5D4037] hover:bg-[#F5F0EB] transition-colors disabled:cursor-not-allowed disabled:opacity-40"
                       >
                         +
                       </button>

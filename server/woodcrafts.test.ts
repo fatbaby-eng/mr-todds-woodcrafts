@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { appRouter } from "./routers";
+import { createOrder, updateOrderPaymentStatus } from "./db";
 import type { TrpcContext } from "./_core/context";
 
 // ─── Mock DB helpers ──────────────────────────────────────────────────────────
@@ -37,6 +38,7 @@ vi.mock("./db", () => ({
   getOrderById: vi.fn().mockResolvedValue(null),
   createOrder: vi.fn().mockResolvedValue({ orderId: 42, orderNumber: "WT-20260001" }),
   updateOrderStatus: vi.fn().mockResolvedValue(undefined),
+  updateOrderPaymentStatus: vi.fn().mockResolvedValue(undefined),
   getTradeShows: vi.fn().mockResolvedValue([
     {
       id: 1, name: "Nebraska Craft Fair", location: "Omaha, NE",
@@ -74,6 +76,10 @@ vi.mock("./db", () => ({
 vi.mock("./_core/notification", () => ({
   notifyOwner: vi.fn().mockResolvedValue(true),
 }));
+
+beforeEach(() => {
+  vi.clearAllMocks();
+});
 
 // ─── Context helpers ──────────────────────────────────────────────────────────
 function makePublicCtx(): TrpcContext {
@@ -194,6 +200,12 @@ describe("orders.create", () => {
     });
     expect(result.orderNumber).toMatch(/^MTW-\d{4}-\d+$/);
     expect(result.orderId).toBe(42);
+    expect(result.totalAmount).toBe(4695);
+    expect(createOrder).toHaveBeenCalledWith(expect.objectContaining({
+      paymentMethod: "VENMO",
+      paymentStatus: "PENDING",
+      totalAmount: 4695,
+    }));
   });
 });
 
@@ -207,6 +219,20 @@ describe("orders.updateStatus", () => {
   it("rejects non-admin from updating order status", async () => {
     const caller = appRouter.createCaller(makeUserCtx());
     await expect(caller.orders.updateStatus({ id: 1, status: "CONFIRMED" })).rejects.toThrow();
+  });
+});
+
+describe("orders.updatePaymentStatus", () => {
+  it("allows admin to mark Venmo payments as paid", async () => {
+    const caller = appRouter.createCaller(makeAdminCtx());
+    const result = await caller.orders.updatePaymentStatus({ id: 1, paymentStatus: "PAID" });
+    expect(result.success).toBe(true);
+    expect(updateOrderPaymentStatus).toHaveBeenCalledWith(1, "PAID");
+  });
+
+  it("rejects non-admin from updating payment status", async () => {
+    const caller = appRouter.createCaller(makeUserCtx());
+    await expect(caller.orders.updatePaymentStatus({ id: 1, paymentStatus: "PAID" })).rejects.toThrow();
   });
 });
 

@@ -5,6 +5,7 @@ import AdminLayout from "./AdminLayout";
 import { toast } from "sonner";
 
 const STATUS_OPTIONS = ["PENDING", "CONFIRMED", "CARVING", "FINISHED", "SHIPPED", "DELIVERED", "CANCELLED"] as const;
+const PAYMENT_STATUS_OPTIONS = ["PENDING", "PAID", "REFUNDED"] as const;
 const STATUS_COLORS: Record<string, string> = {
   PENDING: "bg-yellow-900/40 text-yellow-400 border-yellow-900/50",
   CONFIRMED: "bg-blue-900/40 text-blue-400 border-blue-900/50",
@@ -13,6 +14,11 @@ const STATUS_COLORS: Record<string, string> = {
   SHIPPED: "bg-purple-900/40 text-purple-400 border-purple-900/50",
   DELIVERED: "bg-emerald-900/40 text-emerald-400 border-emerald-900/50",
   CANCELLED: "bg-red-900/40 text-red-400 border-red-900/50",
+};
+const PAYMENT_STATUS_COLORS: Record<string, string> = {
+  PENDING: "bg-yellow-900/40 text-yellow-400 border-yellow-900/50",
+  PAID: "bg-emerald-900/40 text-emerald-400 border-emerald-900/50",
+  REFUNDED: "bg-purple-900/40 text-purple-400 border-purple-900/50",
 };
 
 const formatPrice = (cents: number) =>
@@ -39,6 +45,15 @@ export default function AdminOrders() {
       toast.success("Order status updated.");
     },
     onError: () => toast.error("Failed to update status."),
+  });
+
+  const updatePaymentStatus = trpc.orders.updatePaymentStatus.useMutation({
+    onSuccess: () => {
+      utils.orders.list.invalidate();
+      utils.orders.byId.invalidate({ id: selectedId! });
+      toast.success("Payment status updated.");
+    },
+    onError: () => toast.error("Failed to update payment status."),
   });
 
   const shippingAddr = orderDetail?.shippingAddress as {
@@ -82,7 +97,7 @@ export default function AdminOrders() {
               <table className="w-full text-sm" style={{ fontFamily: "Inter, sans-serif" }}>
                 <thead>
                   <tr className="border-b border-[#2D1A0E]">
-                    {["Order #", "Customer", "Date", "Items", "Total", "Status", ""].map((h) => (
+                    {["Order #", "Customer", "Date", "Total", "Payment", "Status", ""].map((h) => (
                       <th key={h} className="px-4 py-3 text-left text-xs font-semibold tracking-widest uppercase text-[#8D6E63]">
                         {h}
                       </th>
@@ -106,9 +121,16 @@ export default function AdminOrders() {
                       <td className="px-4 py-3 text-[#8D6E63]">
                         {new Date(order.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                       </td>
-                      <td className="px-4 py-3 text-[#8D6E63]">—</td>
                       <td className="px-4 py-3 text-[#F5F0EB] font-semibold">
                         {formatPrice(order.totalAmount)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="flex flex-col gap-1">
+                          <span className="text-xs font-semibold text-[#F5F0EB]">{order.paymentMethod}</span>
+                          <span className={`w-fit px-2 py-0.5 rounded-full text-[10px] font-semibold border ${PAYMENT_STATUS_COLORS[order.paymentStatus] ?? "bg-[#2D1A0E] text-[#8D6E63] border-[#2D1A0E]"}`}>
+                            {order.paymentStatus}
+                          </span>
+                        </div>
                       </td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${STATUS_COLORS[order.status] ?? "bg-[#2D1A0E] text-[#8D6E63] border-[#2D1A0E]"}`}>
@@ -157,6 +179,26 @@ export default function AdminOrders() {
                       style={{ fontFamily: "Inter, sans-serif" }}
                     >
                       {STATUS_OPTIONS.map((s) => <option key={s} value={s} className="bg-[#1A1008] text-[#F5F0EB]">{s}</option>)}
+                    </select>
+                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none" />
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-4">
+                  <span className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63]" style={{ fontFamily: "Inter, sans-serif" }}>
+                    Payment
+                  </span>
+                  <span className="rounded bg-[#2D1A0E] px-2 py-1 text-xs font-semibold text-[#F5F0EB]" style={{ fontFamily: "Inter, sans-serif" }}>
+                    {orderDetail.paymentMethod}
+                  </span>
+                  <div className="relative">
+                    <select
+                      value={orderDetail.paymentStatus}
+                      onChange={(e) => updatePaymentStatus.mutate({ id: orderDetail.id, paymentStatus: e.target.value as typeof PAYMENT_STATUS_OPTIONS[number] })}
+                      className={`appearance-none pl-3 pr-8 py-1.5 rounded border text-xs font-semibold bg-transparent cursor-pointer focus:outline-none ${PAYMENT_STATUS_COLORS[orderDetail.paymentStatus] ?? "border-[#2D1A0E] text-[#8D6E63]"}`}
+                      style={{ fontFamily: "Inter, sans-serif" }}
+                    >
+                      {PAYMENT_STATUS_OPTIONS.map((s) => <option key={s} value={s} className="bg-[#1A1008] text-[#F5F0EB]">{s}</option>)}
                     </select>
                     <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none" />
                   </div>
@@ -224,6 +266,11 @@ export default function AdminOrders() {
                     <span>Total</span>
                     <span>{formatPrice(orderDetail.totalAmount)}</span>
                   </div>
+                  {orderDetail.notes && (
+                    <p className="pt-3 text-xs text-[#8D6E63]" style={{ fontFamily: "Inter, sans-serif" }}>
+                      {orderDetail.notes}
+                    </p>
+                  )}
                 </div>
               </div>
             )}

@@ -32,7 +32,9 @@ export default function ProductCard({ product }: ProductCardProps) {
     new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
 
   const status = STATUS_LABELS[product.status] ?? STATUS_LABELS.IN_STOCK;
-  const canAddToCart = product.status !== "SOLD_OUT" && product.status !== "RETIRED";
+  const canAddToCart =
+    product.status === "MADE_TO_ORDER" ||
+    (product.status === "IN_STOCK" && product.quantity > 0);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();

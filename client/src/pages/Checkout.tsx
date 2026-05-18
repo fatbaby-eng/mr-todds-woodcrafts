@@ -1,8 +1,8 @@
 import { useCart } from "@/contexts/CartContext";
 import { trpc } from "@/lib/trpc";
 import { useState } from "react";
-import { Link, useLocation } from "wouter";
-import { ArrowLeft, Lock, ShoppingBag, Check } from "lucide-react";
+import { Link } from "wouter";
+import { ArrowLeft, Lock, ShoppingBag, Check, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 type Step = "info" | "shipping" | "review";
@@ -30,11 +30,18 @@ const US_STATES = [
   "VA","WA","WV","WI","WY",
 ];
 
+const DEFAULT_VENMO_HANDLE = "mrtoddsworkshop";
+const VENMO_HANDLE = String(import.meta.env.VITE_VENMO_HANDLE ?? DEFAULT_VENMO_HANDLE).replace(/^@/, "").trim();
+const VENMO_DISPLAY = VENMO_HANDLE ? `@${VENMO_HANDLE}` : "Todd's Venmo";
+const VENMO_URL = VENMO_HANDLE ? `https://venmo.com/u/${encodeURIComponent(VENMO_HANDLE)}` : undefined;
+
+const getVenmoNote = (orderNumber: string) => `Mr. Todd's Woodcrafts order ${orderNumber}`;
+
 export default function Checkout() {
   const { items, subtotal, clearCart } = useCart();
-  const [, navigate] = useLocation();
   const [step, setStep] = useState<Step>("info");
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
+  const [confirmedTotal, setConfirmedTotal] = useState<number | null>(null);
 
   const [customer, setCustomer] = useState<CustomerInfo>({
     firstName: "", lastName: "", email: "", phone: "",
@@ -52,11 +59,12 @@ export default function Checkout() {
   const placeOrder = trpc.orders.create.useMutation({
     onSuccess: (data) => {
       setOrderNumber(data.orderNumber);
+      setConfirmedTotal(data.totalAmount);
       clearCart();
       setStep("review");
     },
-    onError: () => {
-      toast.error("Failed to place order. Please try again.");
+    onError: (error) => {
+      toast.error(error.message || "Failed to place order. Please try again.");
     },
   });
 
@@ -81,7 +89,9 @@ export default function Checkout() {
         productSlug: i.slug,
         imageUrl: i.imageUrl,
       })),
+      paymentMethod: "VENMO",
       shippingCost,
+      notes: `Customer selected Venmo checkout. Ask them to include the order number in the Venmo note.`,
     });
   };
 
@@ -113,10 +123,10 @@ export default function Checkout() {
             className="font-cinzel text-[#3E2723] text-3xl mb-3"
             style={{ fontFamily: "Cinzel, serif" }}
           >
-            Order Confirmed!
+            Order Received!
           </h1>
           <p className="text-[#5D4037] mb-2" style={{ fontFamily: "Lora, serif" }}>
-            Thank you for your order. Todd will begin work on your pieces shortly.
+            Thank you for your order. Please send payment with Venmo so Todd can confirm and prepare your pieces.
           </p>
           <div className="bg-white border border-[#D7CCC8] rounded-lg p-6 my-6 text-left">
             <p className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-1" style={{ fontFamily: "Inter, sans-serif" }}>
@@ -125,8 +135,41 @@ export default function Checkout() {
             <p className="font-cinzel text-[#3E2723] text-xl" style={{ fontFamily: "Cinzel, serif" }}>
               #{orderNumber}
             </p>
+            <div className="mt-5 rounded border border-[#C9A227]/60 bg-[#FFF8E1] p-4">
+              <p className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-2" style={{ fontFamily: "Inter, sans-serif" }}>
+                Venmo Payment
+              </p>
+              <dl className="space-y-2 text-sm" style={{ fontFamily: "Inter, sans-serif" }}>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-[#8D6E63]">Send</dt>
+                  <dd className="font-semibold text-[#3E2723]">{formatPrice(confirmedTotal ?? 0)}</dd>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-[#8D6E63]">To</dt>
+                  <dd className="font-semibold text-[#3E2723]">{VENMO_DISPLAY}</dd>
+                </div>
+                <div>
+                  <dt className="text-[#8D6E63] mb-1">Note</dt>
+                  <dd className="rounded bg-white px-3 py-2 font-mono text-xs text-[#3E2723]">
+                    {getVenmoNote(orderNumber)}
+                  </dd>
+                </div>
+              </dl>
+              {VENMO_URL && (
+                <a
+                  href={VENMO_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded bg-[#3E2723] px-4 py-3 text-sm font-semibold uppercase tracking-widest text-[#D7CCC8] transition-colors hover:bg-[#5D4037]"
+                  style={{ fontFamily: "Inter, sans-serif" }}
+                >
+                  Open Venmo
+                  <ExternalLink className="h-4 w-4" />
+                </a>
+              )}
+            </div>
             <p className="text-sm text-[#8D6E63] mt-3" style={{ fontFamily: "Inter, sans-serif" }}>
-              A confirmation email will be sent to <strong>{customer.email}</strong>.
+              Todd will use <strong>{customer.email}</strong> if he needs any details before shipping.
             </p>
             <p className="text-sm text-[#8D6E63] mt-2" style={{ fontFamily: "Inter, sans-serif" }}>
               Estimated shipping: 3–7 business days (made-to-order pieces: 2–4 weeks).
@@ -156,7 +199,7 @@ export default function Checkout() {
           </Link>
           <div className="flex items-center gap-1 text-[#8D6E63] text-xs" style={{ fontFamily: "Inter, sans-serif" }}>
             <Lock className="w-3.5 h-3.5" />
-            Secure Checkout
+            Venmo Checkout
           </div>
         </div>
       </div>
@@ -369,10 +412,10 @@ export default function Checkout() {
 
                 <div className="mt-6 p-4 bg-[#F5F0EB] rounded border border-[#D7CCC8] text-sm text-[#5D4037]" style={{ fontFamily: "Lora, serif" }}>
                   <p className="font-semibold text-[#3E2723] mb-1" style={{ fontFamily: "Cinzel, serif" }}>
-                    Note on Payment
+                    Venmo Payment
                   </p>
                   <p>
-                    This site currently processes orders manually. After placing your order, Todd will contact you within 24 hours to arrange payment via Venmo, PayPal, or check.
+                    After placing your order, you will see Todd's Venmo handle, the exact total, and the order note to include with your payment.
                   </p>
                 </div>
 
@@ -447,6 +490,9 @@ export default function Checkout() {
                   <span>Total</span>
                   <span>{formatPrice(total)}</span>
                 </div>
+                <p className="text-xs text-[#8D6E63] pt-2" style={{ fontFamily: "Inter, sans-serif" }}>
+                  Payment is collected through Venmo after you place the order.
+                </p>
               </div>
             </div>
           </div>

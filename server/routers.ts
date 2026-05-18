@@ -28,6 +28,7 @@ import {
   getWoodBlanks,
   getCartSession,
   upsertCartSession,
+  updateOrderPaymentStatus,
   updateOrderStatus,
   updateProduct,
   updateTradeShow,
@@ -53,6 +54,12 @@ const cartItemSchema = z.object({
   woodType: z.string().optional(),
   slug: z.string(),
 });
+
+const paymentMethodSchema = z.enum(["VENMO", "STRIPE", "PAYPAL", "CASH", "CHECK"]);
+const paymentStatusSchema = z.enum(["PENDING", "PAID", "REFUNDED"]);
+
+const formatCents = (cents: number) =>
+  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
 
 export const appRouter = router({
   system: systemRouter,
@@ -208,6 +215,16 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    updatePaymentStatus: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        paymentStatus: paymentStatusSchema,
+      }))
+      .mutation(async ({ input }) => {
+        await updateOrderPaymentStatus(input.id, input.paymentStatus);
+        return { success: true };
+      }),
+
     // Public checkout creates an order
     create: publicProcedure
       .input(z.object({
@@ -222,7 +239,7 @@ export const appRouter = router({
           zip: z.string(),
           country: z.string(),
         }),
-        paymentMethod: z.enum(["STRIPE", "PAYPAL", "CASH", "CHECK"]).default("STRIPE"),
+        paymentMethod: paymentMethodSchema.default("VENMO"),
         items: z.array(z.object({
           productId: z.number().optional(),
           productName: z.string(),
@@ -231,7 +248,7 @@ export const appRouter = router({
           quantity: z.number().int().min(1),
           woodType: z.string().optional(),
           imageUrl: z.string().optional(),
-        })),
+        })).min(1),
         shippingCost: z.number().int().default(0),
         taxAmount: z.number().int().default(0),
         notes: z.string().optional(),
@@ -240,6 +257,27 @@ export const appRouter = router({
         const subtotal = input.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
         const totalAmount = subtotal + input.shippingCost + input.taxAmount;
         const orderNumber = `MTW-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
+        const productSnapshots = new Map<number, Awaited<ReturnType<typeof getProductById>>>();
+
+        for (const item of input.items) {
+          if (!item.productId) continue;
+          const product = await getProductById(item.productId);
+          productSnapshots.set(item.productId, product);
+
+          if (!product || product.status === "SOLD_OUT" || product.status === "RETIRED") {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: `${item.productName} is no longer available.`,
+            });
+          }
+
+          if (product.status === "IN_STOCK" && product.quantity < item.quantity) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: `Only ${product.quantity} ${product.name} ${product.quantity === 1 ? "is" : "are"} available.`,
+            });
+          }
+        }
 
         await createOrder({
           orderNumber,
@@ -272,10 +310,27 @@ export const appRouter = router({
           }))
         );
 
+        void notifyOwner({
+          title: `New ${input.paymentMethod} order ${orderNumber}`,
+          content: [
+            `Customer: ${input.customerName} <${input.customerEmail}>`,
+            input.customerPhone ? `Phone: ${input.customerPhone}` : undefined,
+            `Payment: ${input.paymentMethod} (${formatCents(totalAmount)})`,
+            `Order: ${orderNumber}`,
+            "",
+            "Items:",
+            ...input.items.map((item) => `- ${item.quantity} x ${item.productName} (${formatCents(item.price * item.quantity)})`),
+            "",
+            `Ship to: ${input.shippingAddress.line1}${input.shippingAddress.line2 ? `, ${input.shippingAddress.line2}` : ""}, ${input.shippingAddress.city}, ${input.shippingAddress.state} ${input.shippingAddress.zip}`,
+          ].filter(Boolean).join("\n"),
+        }).catch((error) => {
+          console.warn("[Orders] Failed to notify owner about new order:", error);
+        });
+
         // Decrement stock for in-stock products
         for (const item of input.items) {
           if (item.productId) {
-            const product = await getProductById(item.productId);
+            const product = productSnapshots.get(item.productId);
             if (product && product.status === "IN_STOCK") {
               const newQty = Math.max(0, product.quantity - item.quantity);
               await updateProduct(item.productId, {
@@ -286,7 +341,7 @@ export const appRouter = router({
           }
         }
 
-        return { orderNumber, orderId: order.id };
+        return { orderNumber, orderId: order.id, totalAmount };
       }),
   }),
 

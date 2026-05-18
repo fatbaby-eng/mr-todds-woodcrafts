@@ -22,6 +22,13 @@
       "when": 1778275859032,
       "tag": "0002_high_centennial",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1779101001703,
+      "tag": "0003_bright_shaman",
+      "breakpoints": true
     }
   ]
 }
