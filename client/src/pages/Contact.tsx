@@ -1,7 +1,8 @@
 import { trpc } from "@/lib/trpc";
 import { useState } from "react";
-import { Mail, MapPin, Clock, Send, Check } from "lucide-react";
+import { Mail, MapPin, Clock, Send, Check, Globe } from "lucide-react";
 import PublicLayout from "@/components/PublicLayout";
+import { OFFICIAL_WORKSHOP_SITE_URL } from "@/const";
 import { toast } from "sonner";
 
 export default function Contact() {
@@ -58,6 +59,23 @@ export default function Contact() {
                   Reach Out
                 </h2>
                 <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <Globe className="w-5 h-5 text-[#C9A227] mt-0.5 flex-shrink-0" strokeWidth={1.5} />
+                    <div>
+                      <p className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-0.5" style={{ fontFamily: "Inter, sans-serif" }}>
+                        Website
+                      </p>
+                      <a
+                        href={OFFICIAL_WORKSHOP_SITE_URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-[#3E2723] hover:text-[#C9A227] transition-colors"
+                        style={{ fontFamily: "Inter, sans-serif" }}
+                      >
+                        mrtoddsworkshop.com
+                      </a>
+                    </div>
+                  </div>
                   <div className="flex items-start gap-3">
                     <Mail className="w-5 h-5 text-[#C9A227] mt-0.5 flex-shrink-0" strokeWidth={1.5} />
                     <div>

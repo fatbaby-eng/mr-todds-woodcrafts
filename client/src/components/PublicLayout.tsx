@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import CartDrawer from "./CartDrawer";
 import { trpc } from "@/lib/trpc";
+import { OFFICIAL_WORKSHOP_SITE_URL } from "@/const";
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
@@ -209,6 +210,15 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             <p className="text-xs text-[#5D4037]" style={{ fontFamily: "Inter, sans-serif" }}>
               © {new Date().getFullYear()} Mr. Todd's Woodcrafts. All rights reserved.
             </p>
+            <a
+              href={OFFICIAL_WORKSHOP_SITE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-[#8D6E63] hover:text-[#C9A227] transition-colors"
+              style={{ fontFamily: "Inter, sans-serif" }}
+            >
+              mrtoddsworkshop.com
+            </a>
             <p className="text-xs text-[#5D4037]" style={{ fontFamily: "Inter, sans-serif" }}>
               Handcrafted in Omaha, Nebraska
             </p>

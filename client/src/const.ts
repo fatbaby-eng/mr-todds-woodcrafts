@@ -1,5 +1,8 @@
 export { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 
+/** Public marketing site for the workshop (opens in a new tab). */
+export const OFFICIAL_WORKSHOP_SITE_URL = "http://www.mrtoddsworkshop.com/";
+
 // Generate login URL at runtime so redirect URI reflects the current origin.
 export const getLoginUrl = () => {
   const oauthPortalUrl = import.meta.env.VITE_OAUTH_PORTAL_URL;
