@@ -10,7 +10,7 @@ export const SITE_CONFIG = {
   madeToOrderLeadTime: "2-4 weeks",
   inStockShippingWindow: "3-7 business days",
   acceptedPaymentLabel: "Venmo accepted",
-  venmoHandle: "",
+  venmoHandle: "" as string,
   venmoInstructions:
     "Place your order online and Todd will follow up with Venmo payment details.",
 } as const;
