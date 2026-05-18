@@ -4,6 +4,7 @@ import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
+import { registerAdminAuthRoutes, ensureAdminUser } from "./adminAuth";
 import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
@@ -36,6 +37,10 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   registerStorageProxy(app);
   registerOAuthRoutes(app);
+  registerAdminAuthRoutes(app);
+  await ensureAdminUser().catch((err) => {
+    console.warn("[Admin] Failed to ensure admin user:", err);
+  });
   // tRPC API
   app.use(
     "/api/trpc",

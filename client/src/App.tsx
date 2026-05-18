@@ -16,6 +16,7 @@ import Checkout from "./pages/Checkout";
 
 // Admin pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminLogin from "./pages/admin/AdminLogin";
 import AdminProducts from "./pages/admin/AdminProducts";
 import AdminOrders from "./pages/admin/AdminOrders";
 import AdminInventory from "./pages/admin/AdminInventory";
@@ -37,6 +38,7 @@ function Router() {
       <Route path="/checkout" component={Checkout} />
 
       {/* Admin panel */}
+      <Route path="/admin/login" component={AdminLogin} />
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/admin/products" component={AdminProducts} />
       <Route path="/admin/orders" component={AdminOrders} />
