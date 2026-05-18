@@ -52,6 +52,12 @@ export default function Home() {
           >
             Measured in Grain and Grace
           </p>
+          <p
+            className="text-[#D7CCC8] text-xs tracking-[0.18em] uppercase mb-8"
+            style={{ fontFamily: "Inter, sans-serif" }}
+          >
+            Secure online checkout with Venmo payments
+          </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/shop"

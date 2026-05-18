@@ -2,7 +2,7 @@ import { useCart } from "@/contexts/CartContext";
 import { trpc } from "@/lib/trpc";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, Lock, ShoppingBag, Check } from "lucide-react";
+import { ArrowLeft, Lock, ShoppingBag, Check, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 type Step = "info" | "shipping" | "review";
@@ -30,11 +30,17 @@ const US_STATES = [
   "VA","WA","WV","WI","WY",
 ];
 
+const venmoUsernameFromEnv = (import.meta.env.VITE_VENMO_USERNAME as string | undefined)?.trim();
+const VENMO_USERNAME = (venmoUsernameFromEnv || "mrtoddsworkshop").replace(/^@/, "");
+const VENMO_HANDLE = `@${VENMO_USERNAME}`;
+const VENMO_PROFILE_URL = `https://account.venmo.com/u/${VENMO_USERNAME}`;
+
 export default function Checkout() {
   const { items, subtotal, clearCart } = useCart();
   const [, navigate] = useLocation();
   const [step, setStep] = useState<Step>("info");
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
+  const [orderTotalDue, setOrderTotalDue] = useState(0);
 
   const [customer, setCustomer] = useState<CustomerInfo>({
     firstName: "", lastName: "", email: "", phone: "",
@@ -61,10 +67,12 @@ export default function Checkout() {
   });
 
   const handlePlaceOrder = () => {
+    setOrderTotalDue(total);
     placeOrder.mutate({
       customerEmail: customer.email,
       customerName: `${customer.firstName} ${customer.lastName}`,
       customerPhone: customer.phone || undefined,
+      paymentMethod: "VENMO",
       shippingAddress: {
         line1: shipping.address1,
         line2: shipping.address2 || undefined,
@@ -128,6 +136,27 @@ export default function Checkout() {
             <p className="text-sm text-[#8D6E63] mt-3" style={{ fontFamily: "Inter, sans-serif" }}>
               A confirmation email will be sent to <strong>{customer.email}</strong>.
             </p>
+          <div className="mt-4 rounded border border-[#D7CCC8] bg-[#F5F0EB] p-4">
+            <p className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-1" style={{ fontFamily: "Inter, sans-serif" }}>
+              Venmo Payment
+            </p>
+            <p className="text-sm text-[#3E2723]" style={{ fontFamily: "Inter, sans-serif" }}>
+              Amount due: <strong>{formatPrice(orderTotalDue)}</strong>
+            </p>
+            <p className="text-sm text-[#5D4037] mt-1" style={{ fontFamily: "Lora, serif" }}>
+              Send payment to <strong>{VENMO_HANDLE}</strong> and include order #{orderNumber} in the Venmo note.
+            </p>
+            <a
+              href={VENMO_PROFILE_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-[#3E2723] hover:text-[#C9A227] transition-colors"
+              style={{ fontFamily: "Inter, sans-serif" }}
+            >
+              Open Venmo Profile
+              <ExternalLink className="w-3.5 h-3.5" />
+            </a>
+          </div>
             <p className="text-sm text-[#8D6E63] mt-2" style={{ fontFamily: "Inter, sans-serif" }}>
               Estimated shipping: 3–7 business days (made-to-order pieces: 2–4 weeks).
             </p>
@@ -369,10 +398,13 @@ export default function Checkout() {
 
                 <div className="mt-6 p-4 bg-[#F5F0EB] rounded border border-[#D7CCC8] text-sm text-[#5D4037]" style={{ fontFamily: "Lora, serif" }}>
                   <p className="font-semibold text-[#3E2723] mb-1" style={{ fontFamily: "Cinzel, serif" }}>
-                    Note on Payment
+                    Venmo Checkout
                   </p>
                   <p>
-                    This site currently processes orders manually. After placing your order, Todd will contact you within 24 hours to arrange payment via Venmo, PayPal, or check.
+                    Place your order, then pay with Venmo. On the next screen you'll see the exact payment amount and order number to include in your Venmo note.
+                  </p>
+                  <p className="mt-2">
+                    Venmo handle: <strong>{VENMO_HANDLE}</strong>
                   </p>
                 </div>
 
@@ -388,7 +420,7 @@ export default function Checkout() {
                   className="mt-6 w-full py-3.5 bg-[#3E2723] text-[#D7CCC8] font-semibold text-sm tracking-widest uppercase rounded hover:bg-[#5D4037] transition-colors disabled:opacity-60"
                   style={{ fontFamily: "Inter, sans-serif" }}
                 >
-                  {placeOrder.isPending ? "Placing Order..." : "Place Order"}
+                  {placeOrder.isPending ? "Placing Order..." : "Place Order & Get Venmo Instructions"}
                 </button>
               </div>
             )}

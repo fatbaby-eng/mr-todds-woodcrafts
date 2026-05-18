@@ -1,10 +1,15 @@
 import { trpc } from "@/lib/trpc";
 import { useState } from "react";
-import { Mail, MapPin, Clock, Send, Check } from "lucide-react";
+import { Mail, MapPin, Clock, Send, Check, ExternalLink } from "lucide-react";
 import PublicLayout from "@/components/PublicLayout";
 import { toast } from "sonner";
 
 export default function Contact() {
+  const venmoUsernameFromEnv = (import.meta.env.VITE_VENMO_USERNAME as string | undefined)?.trim();
+  const venmoUsername = (venmoUsernameFromEnv || "mrtoddsworkshop").replace(/^@/, "");
+  const venmoHandle = `@${venmoUsername}`;
+  const venmoProfileUrl = `https://account.venmo.com/u/${venmoUsername}`;
+
   const [form, setForm] = useState({
     name: "", email: "", subject: "general", message: "",
   });
@@ -89,6 +94,23 @@ export default function Contact() {
                       <p className="text-sm text-[#3E2723]" style={{ fontFamily: "Inter, sans-serif" }}>
                         1–2 business days
                       </p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-3">
+                    <ExternalLink className="w-5 h-5 text-[#C9A227] mt-0.5 flex-shrink-0" strokeWidth={1.5} />
+                    <div>
+                      <p className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-0.5" style={{ fontFamily: "Inter, sans-serif" }}>
+                        Venmo
+                      </p>
+                      <a
+                        href={venmoProfileUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-sm text-[#3E2723] hover:text-[#C9A227] transition-colors"
+                        style={{ fontFamily: "Inter, sans-serif" }}
+                      >
+                        {venmoHandle}
+                      </a>
                     </div>
                   </div>
                 </div>
