@@ -1,7 +1,13 @@
 import { TRPCError } from "@trpc/server";
 import { notifyOwner } from "./_core/notification";
 import { z } from "zod";
-import { COOKIE_NAME } from "@shared/const";
+import {
+  ALL_SETTING_KEYS,
+  COOKIE_NAME,
+  PUBLIC_SETTING_KEYS,
+  SETTING_VENMO_USERNAME,
+  type PublicSettingKey,
+} from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
@@ -23,11 +29,14 @@ import {
   getProductById,
   getProductBySlug,
   getProducts,
+  getSettings,
   getSubscribers,
   getTradeShows,
   getWoodBlanks,
   getCartSession,
+  setSetting,
   upsertCartSession,
+  updateOrderPaymentStatus,
   updateOrderStatus,
   updateProduct,
   updateTradeShow,
@@ -208,6 +217,24 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    updatePaymentStatus: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        paymentStatus: z.enum(["PENDING", "PAID", "REFUNDED"]),
+      }))
+      .mutation(async ({ input }) => {
+        await updateOrderPaymentStatus(input.id, input.paymentStatus);
+        // When the owner marks the order as PAID, automatically advance status
+        // out of PENDING so carving can start.
+        if (input.paymentStatus === "PAID") {
+          const order = await getOrderById(input.id);
+          if (order && order.status === "PENDING") {
+            await updateOrderStatus(input.id, "CONFIRMED");
+          }
+        }
+        return { success: true };
+      }),
+
     // Public checkout creates an order
     create: publicProcedure
       .input(z.object({
@@ -222,7 +249,7 @@ export const appRouter = router({
           zip: z.string(),
           country: z.string(),
         }),
-        paymentMethod: z.enum(["STRIPE", "PAYPAL", "CASH", "CHECK"]).default("STRIPE"),
+        paymentMethod: z.enum(["VENMO", "STRIPE", "PAYPAL", "CASH", "CHECK"]).default("VENMO"),
         items: z.array(z.object({
           productId: z.number().optional(),
           productName: z.string(),
@@ -284,6 +311,40 @@ export const appRouter = router({
               });
             }
           }
+        }
+
+        // Notify the shop owner so they can watch for the Venmo transfer
+        // and mark the order paid in the admin panel. We intentionally do
+        // this *after* the order is persisted and stock decremented so a
+        // notification outage never blocks order placement.
+        try {
+          const itemLines = input.items
+            .map((i) => `  - ${i.quantity} × ${i.productName} (${(i.price / 100).toFixed(2)})`)
+            .join("\n");
+          const fmt = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+          await notifyOwner({
+            title: `New order #${orderNumber} — ${input.customerName} — ${fmt(totalAmount)}`,
+            content: [
+              `Order ${orderNumber}`,
+              `Customer: ${input.customerName} <${input.customerEmail}>${input.customerPhone ? ` (${input.customerPhone})` : ""}`,
+              `Payment method: ${input.paymentMethod}`,
+              "",
+              "Items:",
+              itemLines,
+              "",
+              `Subtotal: ${fmt(subtotal)}`,
+              `Shipping: ${fmt(input.shippingCost)}`,
+              `Total: ${fmt(totalAmount)}`,
+              "",
+              `Ship to: ${input.shippingAddress.line1}${input.shippingAddress.line2 ? `, ${input.shippingAddress.line2}` : ""}, ${input.shippingAddress.city}, ${input.shippingAddress.state} ${input.shippingAddress.zip}, ${input.shippingAddress.country}`,
+              "",
+              input.paymentMethod === "VENMO"
+                ? "Waiting for Venmo payment. Mark order PAID in the admin panel once funds arrive."
+                : "Open the admin panel to confirm payment and start carving.",
+            ].join("\n"),
+          });
+        } catch (err) {
+          console.warn("[orders.create] notifyOwner failed:", err);
         }
 
         return { orderNumber, orderId: order.id };
@@ -441,6 +502,57 @@ export const appRouter = router({
   // ─── Admin Dashboard ──────────────────────────────────────────────────────
   admin: router({
     stats: adminProcedure.query(() => getDashboardStats()),
+  }),
+
+  // ─── Site Settings ────────────────────────────────────────────────────────
+  // Public reads are scoped to PUBLIC_SETTING_KEYS so the storefront can fetch
+  // the Venmo handle / contact email without exposing future admin-only keys.
+  settings: router({
+    publicAll: publicProcedure.query(async () => {
+      const rows = await getSettings([...PUBLIC_SETTING_KEYS]);
+      const out: Record<PublicSettingKey, string | null> = {
+        venmoUsername: null,
+        contactEmail: null,
+        contactPhone: null,
+        shopLive: null,
+      };
+      for (const row of rows) {
+        if ((PUBLIC_SETTING_KEYS as readonly string[]).includes(row.settingKey)) {
+          out[row.settingKey as PublicSettingKey] = row.value;
+        }
+      }
+      return out;
+    }),
+
+    adminAll: adminProcedure.query(async () => {
+      const rows = await getSettings([...ALL_SETTING_KEYS]);
+      const out: Record<string, string | null> = {};
+      for (const key of ALL_SETTING_KEYS) out[key] = null;
+      for (const row of rows) out[row.settingKey] = row.value;
+      return out;
+    }),
+
+    update: adminProcedure
+      .input(z.object({
+        key: z.enum(ALL_SETTING_KEYS as unknown as [string, ...string[]]),
+        value: z.string().nullable(),
+      }))
+      .mutation(async ({ input }) => {
+        // Light validation for the Venmo handle: strip leading '@' and
+        // whitespace so the deep-link URL never gets a stray prefix.
+        let value = input.value;
+        if (input.key === SETTING_VENMO_USERNAME && value) {
+          value = value.trim().replace(/^@+/, "");
+          if (!/^[A-Za-z0-9_-]{1,30}$/.test(value)) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "Venmo username must be 1-30 letters, numbers, hyphens, or underscores.",
+            });
+          }
+        }
+        await setSetting(input.key, value);
+        return { success: true };
+      }),
   }),
 });
 

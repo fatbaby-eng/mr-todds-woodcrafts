@@ -67,7 +67,7 @@ export const orders = mysqlTable("orders", {
   }>().notNull(),
   status: mysqlEnum("status", ["PENDING", "CONFIRMED", "CARVING", "FINISHED", "SHIPPED", "DELIVERED", "CANCELLED"]).notNull().default("PENDING"),
   paymentStatus: mysqlEnum("paymentStatus", ["PENDING", "PAID", "REFUNDED"]).notNull().default("PENDING"),
-  paymentMethod: mysqlEnum("paymentMethod", ["STRIPE", "PAYPAL", "CASH", "CHECK"]).notNull().default("STRIPE"),
+  paymentMethod: mysqlEnum("paymentMethod", ["VENMO", "STRIPE", "PAYPAL", "CASH", "CHECK"]).notNull().default("VENMO"),
   totalAmount: int("totalAmount").notNull(), // cents
   shippingCost: int("shippingCost").notNull().default(0), // cents
   taxAmount: int("taxAmount").notNull().default(0), // cents
@@ -162,3 +162,16 @@ export const cartSessions = mysqlTable("cart_sessions", {
 
 export type CartSession = typeof cartSessions.$inferSelect;
 export type InsertCartSession = typeof cartSessions.$inferInsert;
+
+// ─── Site Settings (key/value, admin configurable) ────────────────────────────
+// Used to store the shop's Venmo handle, contact email, and other small bits
+// of business config without redeploying. Read by public storefront for the
+// Venmo handle (so the checkout deep link / QR works); write is admin-only.
+export const siteSettings = mysqlTable("site_settings", {
+  settingKey: varchar("settingKey", { length: 64 }).notNull().primaryKey(),
+  value: text("value"),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SiteSetting = typeof siteSettings.$inferSelect;
+export type InsertSiteSetting = typeof siteSettings.$inferInsert;

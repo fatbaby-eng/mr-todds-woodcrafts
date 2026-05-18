@@ -66,9 +66,18 @@ vi.mock("./db", () => ({
     dimensions: '12" × 2" × 0.5"', careInstructions: "Hand wash only.",
     leadTimeDays: null, createdAt: new Date(), updatedAt: new Date(),
   }),
-  getOrderByNumber: vi.fn().mockResolvedValue({ id: 42, orderNumber: "WT-20260001", customerName: "Jane Doe", customerEmail: "jane@example.com", status: "PENDING", totalAmount: 4695, shippingCost: 895, shippingAddress: {}, createdAt: new Date(), updatedAt: new Date() }),
+  getOrderByNumber: vi.fn().mockResolvedValue({ id: 42, orderNumber: "WT-20260001", customerName: "Jane Doe", customerEmail: "jane@example.com", status: "PENDING", paymentStatus: "PENDING", paymentMethod: "VENMO", totalAmount: 4695, shippingCost: 895, shippingAddress: {}, createdAt: new Date(), updatedAt: new Date() }),
   createOrderItems: vi.fn().mockResolvedValue(undefined),
   getOrderItems: vi.fn().mockResolvedValue([]),
+  updateOrderPaymentStatus: vi.fn().mockResolvedValue(undefined),
+  getSettings: vi.fn().mockResolvedValue([
+    { settingKey: "venmoUsername", value: "mr-todds-woodcrafts" },
+    { settingKey: "contactEmail", value: "todd@mrtoddsworkshop.com" },
+  ]),
+  getSetting: vi.fn().mockResolvedValue(null),
+  setSetting: vi.fn().mockResolvedValue(undefined),
+  getCartSession: vi.fn().mockResolvedValue(undefined),
+  upsertCartSession: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("./_core/notification", () => ({
@@ -301,5 +310,81 @@ describe("auth.me", () => {
     const result = await caller.auth.me();
     expect(result?.role).toBe("admin");
     expect(result?.name).toBe("Mr. Todd");
+  });
+});
+
+// ─── Settings ─────────────────────────────────────────────────────────────────
+describe("settings.publicAll", () => {
+  it("returns the venmo handle to the public storefront", async () => {
+    const caller = appRouter.createCaller(makePublicCtx());
+    const result = await caller.settings.publicAll();
+    expect(result.venmoUsername).toBe("mr-todds-woodcrafts");
+    expect(result.contactEmail).toBe("todd@mrtoddsworkshop.com");
+    expect(result.contactPhone).toBeNull();
+    expect(result.shopLive).toBeNull();
+  });
+});
+
+describe("settings.update", () => {
+  it("allows admin to set the venmo handle and strips a leading @", async () => {
+    const { setSetting } = await import("./db");
+    const caller = appRouter.createCaller(makeAdminCtx());
+    const result = await caller.settings.update({ key: "venmoUsername", value: "@mr-todds-woodcrafts" });
+    expect(result.success).toBe(true);
+    expect(setSetting).toHaveBeenCalledWith("venmoUsername", "mr-todds-woodcrafts");
+  });
+
+  it("rejects an invalid venmo handle", async () => {
+    const caller = appRouter.createCaller(makeAdminCtx());
+    await expect(
+      caller.settings.update({ key: "venmoUsername", value: "not a valid handle!" })
+    ).rejects.toThrow();
+  });
+
+  it("rejects non-admin from updating settings", async () => {
+    const caller = appRouter.createCaller(makeUserCtx());
+    await expect(
+      caller.settings.update({ key: "contactEmail", value: "x@example.com" })
+    ).rejects.toThrow();
+  });
+});
+
+// ─── Orders — Venmo payment flow ──────────────────────────────────────────────
+describe("orders.create (venmo)", () => {
+  it("defaults paymentMethod to VENMO and notifies the owner", async () => {
+    const { notifyOwner } = await import("./_core/notification");
+    (notifyOwner as ReturnType<typeof vi.fn>).mockClear();
+
+    const caller = appRouter.createCaller(makePublicCtx());
+    const result = await caller.orders.create({
+      customerName: "Jane Doe",
+      customerEmail: "jane@example.com",
+      shippingAddress: { line1: "123 Main St", city: "Omaha", state: "NE", zip: "68102", country: "US" },
+      items: [{ productId: 1, productName: "Cherry Spoon", quantity: 1, price: 3800 }],
+      shippingCost: 895,
+    });
+
+    expect(result.orderNumber).toMatch(/^MTW-\d{4}-\d+$/);
+    expect(notifyOwner).toHaveBeenCalledTimes(1);
+    const arg = (notifyOwner as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    expect(arg.title).toContain("Jane Doe");
+    expect(arg.content).toContain("Order ");
+    expect(arg.content).toContain("Cherry Spoon");
+    expect(arg.content).toContain("VENMO");
+  });
+});
+
+describe("orders.updatePaymentStatus", () => {
+  it("allows admin to mark an order as paid", async () => {
+    const caller = appRouter.createCaller(makeAdminCtx());
+    const result = await caller.orders.updatePaymentStatus({ id: 42, paymentStatus: "PAID" });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects non-admin from updating payment status", async () => {
+    const caller = appRouter.createCaller(makeUserCtx());
+    await expect(
+      caller.orders.updatePaymentStatus({ id: 42, paymentStatus: "PAID" })
+    ).rejects.toThrow();
   });
 });

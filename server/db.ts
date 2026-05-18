@@ -6,6 +6,7 @@ import {
   orderItems,
   orders,
   products,
+  siteSettings,
   subscribers,
   tradeShows,
   users,
@@ -183,6 +184,12 @@ export async function updateOrderStatus(id: number, status: string, trackingNumb
   await db.update(orders).set(updateData).where(eq(orders.id, id));
 }
 
+export async function updateOrderPaymentStatus(id: number, paymentStatus: "PENDING" | "PAID" | "REFUNDED") {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  await db.update(orders).set({ paymentStatus }).where(eq(orders.id, id));
+}
+
 export async function getOrderItems(orderId: number) {
   const db = await getDb();
   if (!db) return [];
@@ -281,6 +288,36 @@ export async function upsertCartSession(sessionId: string, items: InsertCartSess
     .insert(cartSessions)
     .values({ sessionId, items: items ?? [] })
     .onDuplicateKeyUpdate({ set: { items: items ?? [] } });
+}
+
+// ─── Site Settings ────────────────────────────────────────────────────────────
+// Tiny key/value table for shop-wide config the owner can change without a redeploy
+// (Venmo handle, contact email, contact phone, etc.). Keys are constants defined
+// in @shared/const so server/client both know which keys are public-readable.
+export async function getSettings(keys?: string[]) {
+  const db = await getDb();
+  if (!db) return [] as Array<{ settingKey: string; value: string | null }>;
+  let query = db.select().from(siteSettings).$dynamic();
+  if (keys && keys.length > 0) {
+    query = query.where(sql`${siteSettings.settingKey} in (${sql.join(keys.map((k) => sql`${k}`), sql`, `)})`);
+  }
+  return query;
+}
+
+export async function getSetting(key: string): Promise<string | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(siteSettings).where(eq(siteSettings.settingKey, key)).limit(1);
+  return rows[0]?.value ?? null;
+}
+
+export async function setSetting(key: string, value: string | null) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  await db
+    .insert(siteSettings)
+    .values({ settingKey: key, value })
+    .onDuplicateKeyUpdate({ set: { value } });
 }
 
 // ─── Analytics helpers ────────────────────────────────────────────────────────
