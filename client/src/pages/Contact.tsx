@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Mail, MapPin, Clock, Send, Check } from "lucide-react";
 import PublicLayout from "@/components/PublicLayout";
 import { toast } from "sonner";
+import { STOREFRONT } from "@/config/storefront";
 
 export default function Contact() {
   const [form, setForm] = useState({
@@ -64,8 +65,8 @@ export default function Contact() {
                       <p className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-0.5" style={{ fontFamily: "Inter, sans-serif" }}>
                         Email
                       </p>
-                      <a href="mailto:todd@mrtodds.com" className="text-sm text-[#3E2723] hover:text-[#C9A227] transition-colors" style={{ fontFamily: "Inter, sans-serif" }}>
-                        todd@mrtodds.com
+                      <a href={`mailto:${STOREFRONT.supportEmail}`} className="text-sm text-[#3E2723] hover:text-[#C9A227] transition-colors" style={{ fontFamily: "Inter, sans-serif" }}>
+                        {STOREFRONT.supportEmail}
                       </a>
                     </div>
                   </div>
@@ -100,10 +101,10 @@ export default function Contact() {
                   className="font-cinzel text-[#C9A227] text-sm mb-2"
                   style={{ fontFamily: "Cinzel, serif" }}
                 >
-                  Custom Orders
+                  Custom Orders & Venmo
                 </h3>
                 <p className="text-xs text-[#D7CCC8] leading-relaxed" style={{ fontFamily: "Lora, serif" }}>
-                  Todd accepts a limited number of custom commissions each month. Custom pieces typically take 2–4 weeks and start at $75. Describe what you have in mind and he'll get back to you with a quote.
+                  Todd accepts a limited number of custom commissions each month. Custom pieces typically take 2-4 weeks and start at $75. Standard checkout payments are currently handled through Venmo at {STOREFRONT.venmoDisplayHandle}.
                 </p>
               </div>
 

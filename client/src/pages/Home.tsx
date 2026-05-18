@@ -196,7 +196,7 @@ export default function Home() {
             Free Shipping on Orders Over $75
           </h2>
           <p className="text-[#5D4037] mb-8 max-w-md mx-auto" style={{ fontFamily: "Lora, serif" }}>
-            Every order ships carefully packaged from Omaha, Nebraska. Made-to-order pieces ship within 2 weeks.
+            Every order ships carefully packaged from Omaha, Nebraska. Checkout is live now with Venmo payments, and made-to-order pieces ship within 2 weeks.
           </p>
           <Link
             href="/shop"

@@ -1,9 +1,10 @@
 import { useCart } from "@/contexts/CartContext";
 import { trpc } from "@/lib/trpc";
 import { useState } from "react";
-import { Link, useLocation } from "wouter";
-import { ArrowLeft, Lock, ShoppingBag, Check } from "lucide-react";
+import { Link } from "wouter";
+import { ArrowLeft, Lock, ShoppingBag, Check, ExternalLink, Copy } from "lucide-react";
 import { toast } from "sonner";
+import { STOREFRONT, buildVenmoPaymentLink } from "@/config/storefront";
 
 type Step = "info" | "shipping" | "review";
 
@@ -32,9 +33,9 @@ const US_STATES = [
 
 export default function Checkout() {
   const { items, subtotal, clearCart } = useCart();
-  const [, navigate] = useLocation();
   const [step, setStep] = useState<Step>("info");
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
+  const [copiedVenmo, setCopiedVenmo] = useState(false);
 
   const [customer, setCustomer] = useState<CustomerInfo>({
     firstName: "", lastName: "", email: "", phone: "",
@@ -46,7 +47,7 @@ export default function Checkout() {
   const formatPrice = (cents: number) =>
     new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
 
-  const shippingCost = subtotal >= 7500 ? 0 : 895; // free over $75
+  const shippingCost = subtotal >= STOREFRONT.freeShippingThresholdCents ? 0 : STOREFRONT.shippingFlatRateCents;
   const total = subtotal + shippingCost;
 
   const placeOrder = trpc.orders.create.useMutation({
@@ -81,8 +82,21 @@ export default function Checkout() {
         productSlug: i.slug,
         imageUrl: i.imageUrl,
       })),
+      paymentMethod: "CASH",
       shippingCost,
+      notes: `Customer chose Venmo checkout (${STOREFRONT.venmoDisplayHandle}).`,
     });
+  };
+
+  const copyVenmoHandle = async () => {
+    try {
+      await navigator.clipboard.writeText(STOREFRONT.venmoDisplayHandle);
+      setCopiedVenmo(true);
+      toast.success("Venmo handle copied");
+      setTimeout(() => setCopiedVenmo(false), 1800);
+    } catch {
+      toast.error("Could not copy handle. Please copy it manually.");
+    }
   };
 
   if (items.length === 0 && !orderNumber) {
@@ -103,6 +117,9 @@ export default function Checkout() {
 
   // ─── Order Confirmation ────────────────────────────────────────────────────
   if (step === "review" && orderNumber) {
+    const venmoNote = `Order ${orderNumber} - ${customer.firstName} ${customer.lastName}`.trim();
+    const venmoPaymentLink = buildVenmoPaymentLink(total, venmoNote);
+
     return (
       <div className="min-h-screen bg-[#F5F0EB] flex items-center justify-center px-4">
         <div className="max-w-lg w-full text-center">
@@ -132,6 +149,34 @@ export default function Checkout() {
               Estimated shipping: 3–7 business days (made-to-order pieces: 2–4 weeks).
             </p>
           </div>
+          <div className="bg-[#3E2723] rounded-lg p-5 text-left mb-6">
+            <p className="text-[#C9A227] text-xs font-semibold tracking-widest uppercase mb-2" style={{ fontFamily: "Inter, sans-serif" }}>
+              Final Step: Venmo Payment
+            </p>
+            <p className="text-[#D7CCC8] text-sm mb-3" style={{ fontFamily: "Lora, serif" }}>
+              Send <strong>{formatPrice(total)}</strong> to <strong>{STOREFRONT.venmoDisplayHandle}</strong> with note <strong>{venmoNote}</strong>.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <a
+                href={venmoPaymentLink}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#C9A227] text-[#3E2723] text-xs font-semibold tracking-widest uppercase rounded hover:bg-[#E8C84A] transition-colors"
+                style={{ fontFamily: "Inter, sans-serif" }}
+              >
+                Pay on Venmo
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+              <button
+                onClick={copyVenmoHandle}
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 border border-[#8D6E63] text-[#D7CCC8] text-xs font-semibold tracking-widest uppercase rounded hover:bg-white/10 transition-colors"
+                style={{ fontFamily: "Inter, sans-serif" }}
+              >
+                {copiedVenmo ? "Copied" : "Copy Handle"}
+                <Copy className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
           <Link
             href="/shop"
             className="inline-flex items-center gap-2 px-8 py-3.5 bg-[#3E2723] text-[#D7CCC8] font-semibold text-sm tracking-widest uppercase rounded hover:bg-[#5D4037] transition-colors"
@@ -156,7 +201,7 @@ export default function Checkout() {
           </Link>
           <div className="flex items-center gap-1 text-[#8D6E63] text-xs" style={{ fontFamily: "Inter, sans-serif" }}>
             <Lock className="w-3.5 h-3.5" />
-            Secure Checkout
+            Secure Checkout - Venmo
           </div>
         </div>
       </div>
@@ -372,7 +417,7 @@ export default function Checkout() {
                     Note on Payment
                   </p>
                   <p>
-                    This site currently processes orders manually. After placing your order, Todd will contact you within 24 hours to arrange payment via Venmo, PayPal, or check.
+                    This checkout reserves your order. On the confirmation page, you will get a direct Venmo link to pay {formatPrice(total)} to {STOREFRONT.venmoDisplayHandle}. Todd confirms paid orders quickly.
                   </p>
                 </div>
 

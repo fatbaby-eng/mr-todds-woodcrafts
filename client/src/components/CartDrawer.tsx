@@ -160,7 +160,7 @@ export default function CartDrawer() {
               </span>
             </div>
             <p className="text-xs text-[#8D6E63] mb-4" style={{ fontFamily: "Inter, sans-serif" }}>
-              Shipping and taxes calculated at checkout
+              Shipping and taxes calculated at checkout. Payments are collected through Venmo.
             </p>
             <Link
               href="/checkout"
