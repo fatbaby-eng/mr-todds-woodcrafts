@@ -50,7 +50,7 @@ export default function Home() {
             className="text-[#C9A227] text-sm tracking-[0.2em] uppercase mb-10"
             style={{ fontFamily: "Inter, sans-serif" }}
           >
-            Measured in Grain and Grace
+            Measured in Grain and Grace - Now Taking Venmo Orders
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
@@ -196,7 +196,7 @@ export default function Home() {
             Free Shipping on Orders Over $75
           </h2>
           <p className="text-[#5D4037] mb-8 max-w-md mx-auto" style={{ fontFamily: "Lora, serif" }}>
-            Every order ships carefully packaged from Omaha, Nebraska. Made-to-order pieces ship within 2 weeks.
+            Every order ships carefully packaged from Omaha, Nebraska. Checkout creates an order number, then you pay by Venmo.
           </p>
           <Link
             href="/shop"

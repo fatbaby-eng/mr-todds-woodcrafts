@@ -70,7 +70,7 @@ export default function Shop() {
             The Collection
           </h1>
           <p className="text-[#8D6E63] mt-4 max-w-lg mx-auto" style={{ fontFamily: "Lora, serif" }}>
-            Every piece carved by hand from sustainably sourced hardwoods. Browse the full collection below.
+            Every piece carved by hand. Add a piece to your cart, place the order, and pay by Venmo with the order number in the note.
           </p>
         </div>
       </div>

@@ -28,6 +28,7 @@ import {
   getWoodBlanks,
   getCartSession,
   upsertCartSession,
+  updateOrderPaymentStatus,
   updateOrderStatus,
   updateProduct,
   updateTradeShow,
@@ -208,6 +209,16 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    updatePaymentStatus: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        paymentStatus: z.enum(["PENDING", "PAID", "REFUNDED"]),
+      }))
+      .mutation(async ({ input }) => {
+        await updateOrderPaymentStatus(input.id, input.paymentStatus);
+        return { success: true };
+      }),
+
     // Public checkout creates an order
     create: publicProcedure
       .input(z.object({
@@ -222,7 +233,7 @@ export const appRouter = router({
           zip: z.string(),
           country: z.string(),
         }),
-        paymentMethod: z.enum(["STRIPE", "PAYPAL", "CASH", "CHECK"]).default("STRIPE"),
+        paymentMethod: z.enum(["VENMO", "STRIPE", "PAYPAL", "CASH", "CHECK"]).default("VENMO"),
         items: z.array(z.object({
           productId: z.number().optional(),
           productName: z.string(),
@@ -272,6 +283,25 @@ export const appRouter = router({
           }))
         );
 
+        try {
+          const total = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(totalAmount / 100);
+          await notifyOwner({
+            title: `New Venmo order ${orderNumber}`,
+            content: [
+              `Order: ${orderNumber}`,
+              `Customer: ${input.customerName} <${input.customerEmail}>`,
+              input.customerPhone ? `Phone: ${input.customerPhone}` : undefined,
+              `Total: ${total}`,
+              `Payment: ${input.paymentMethod} pending`,
+              "",
+              "Items:",
+              ...input.items.map((item) => `- ${item.quantity} x ${item.productName} (${new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((item.price * item.quantity) / 100)})`),
+            ].filter(Boolean).join("\n"),
+          });
+        } catch (error) {
+          console.warn("[Orders] Failed to notify owner about new order:", error);
+        }
+
         // Decrement stock for in-stock products
         for (const item of input.items) {
           if (item.productId) {
@@ -286,7 +316,7 @@ export const appRouter = router({
           }
         }
 
-        return { orderNumber, orderId: order.id };
+        return { orderNumber, orderId: order.id, totalAmount, paymentMethod: input.paymentMethod };
       }),
   }),
 
