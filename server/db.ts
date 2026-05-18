@@ -183,7 +183,7 @@ export async function updateOrderStatus(id: number, status: string, trackingNumb
   await db.update(orders).set(updateData).where(eq(orders.id, id));
 }
 
-export async function updateOrderPaymentStatus(id: number, paymentStatus: string) {
+export async function updateOrderPaymentStatus(id: number, paymentStatus: NonNullable<InsertOrder["paymentStatus"]>) {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
   await db.update(orders).set({ paymentStatus }).where(eq(orders.id, id));
