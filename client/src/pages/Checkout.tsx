@@ -1,11 +1,11 @@
 import { useCart } from "@/contexts/CartContext";
 import { trpc } from "@/lib/trpc";
 import { useState } from "react";
-import { Link, useLocation } from "wouter";
-import { ArrowLeft, Lock, ShoppingBag, Check } from "lucide-react";
+import { Link } from "wouter";
+import { ArrowLeft, Lock, ShoppingBag, Check, ExternalLink, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 
-type Step = "info" | "shipping" | "review";
+type Step = "info" | "shipping" | "venmo";
 
 interface CustomerInfo {
   firstName: string;
@@ -30,11 +30,28 @@ const US_STATES = [
   "VA","WA","WV","WI","WY",
 ];
 
+const VENMO_USERNAME = import.meta.env.VITE_VENMO_USERNAME as string | undefined;
+
+function venmoWebUrl(username: string, amountDollars: string, note: string) {
+  const params = new URLSearchParams({ txn: "pay", note });
+  return `https://venmo.com/${encodeURIComponent(username)}?${params.toString()}&amount=${amountDollars}`;
+}
+
+function venmoAppUrl(username: string, amountDollars: string, note: string) {
+  const params = new URLSearchParams({
+    txn: "pay",
+    recipients: username,
+    amount: amountDollars,
+    note,
+  });
+  return `venmo://paycharge?${params.toString()}`;
+}
+
 export default function Checkout() {
   const { items, subtotal, clearCart } = useCart();
-  const [, navigate] = useLocation();
   const [step, setStep] = useState<Step>("info");
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
+  const [orderTotal, setOrderTotal] = useState<number>(0);
 
   const [customer, setCustomer] = useState<CustomerInfo>({
     firstName: "", lastName: "", email: "", phone: "",
@@ -46,14 +63,15 @@ export default function Checkout() {
   const formatPrice = (cents: number) =>
     new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
 
-  const shippingCost = subtotal >= 7500 ? 0 : 895; // free over $75
+  const shippingCost = subtotal >= 7500 ? 0 : 895;
   const total = subtotal + shippingCost;
 
   const placeOrder = trpc.orders.create.useMutation({
     onSuccess: (data) => {
       setOrderNumber(data.orderNumber);
+      setOrderTotal(total);
       clearCart();
-      setStep("review");
+      setStep("venmo");
     },
     onError: () => {
       toast.error("Failed to place order. Please try again.");
@@ -73,6 +91,7 @@ export default function Checkout() {
         zip: shipping.zip,
         country: shipping.country,
       },
+      paymentMethod: "VENMO",
       items: items.map((i) => ({
         productId: i.productId,
         quantity: i.quantity,
@@ -101,44 +120,140 @@ export default function Checkout() {
     );
   }
 
-  // ─── Order Confirmation ────────────────────────────────────────────────────
-  if (step === "review" && orderNumber) {
+  // ─── Venmo Payment Step ────────────────────────────────────────────────────
+  if (step === "venmo" && orderNumber) {
+    const amountDollars = (orderTotal / 100).toFixed(2);
+    const payNote = `Mr. Todds Woodcrafts Order ${orderNumber}`;
+    const hasVenmoUsername = !!VENMO_USERNAME;
+
     return (
-      <div className="min-h-screen bg-[#F5F0EB] flex items-center justify-center px-4">
-        <div className="max-w-lg w-full text-center">
-          <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-6">
-            <Check className="w-10 h-10 text-emerald-600" />
+      <div className="min-h-screen bg-[#F5F0EB]">
+        {/* Header */}
+        <div className="bg-[#3E2723] py-4 px-4">
+          <div className="max-w-5xl mx-auto flex items-center justify-between">
+            <Link href="/" className="flex items-center gap-2">
+              <span className="text-[#C9A227] font-cinzel text-lg font-semibold" style={{ fontFamily: "Cinzel, serif" }}>
+                Mr. Todd's Woodcrafts
+              </span>
+            </Link>
           </div>
-          <h1
-            className="font-cinzel text-[#3E2723] text-3xl mb-3"
-            style={{ fontFamily: "Cinzel, serif" }}
-          >
-            Order Confirmed!
-          </h1>
-          <p className="text-[#5D4037] mb-2" style={{ fontFamily: "Lora, serif" }}>
-            Thank you for your order. Todd will begin work on your pieces shortly.
-          </p>
-          <div className="bg-white border border-[#D7CCC8] rounded-lg p-6 my-6 text-left">
-            <p className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-1" style={{ fontFamily: "Inter, sans-serif" }}>
-              Order Number
-            </p>
-            <p className="font-cinzel text-[#3E2723] text-xl" style={{ fontFamily: "Cinzel, serif" }}>
-              #{orderNumber}
-            </p>
-            <p className="text-sm text-[#8D6E63] mt-3" style={{ fontFamily: "Inter, sans-serif" }}>
-              A confirmation email will be sent to <strong>{customer.email}</strong>.
-            </p>
-            <p className="text-sm text-[#8D6E63] mt-2" style={{ fontFamily: "Inter, sans-serif" }}>
-              Estimated shipping: 3–7 business days (made-to-order pieces: 2–4 weeks).
-            </p>
+        </div>
+
+        <div className="max-w-2xl mx-auto px-4 py-12">
+          {/* Order confirmed banner */}
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+              <Check className="w-5 h-5 text-emerald-600" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold tracking-widest uppercase text-emerald-700" style={{ fontFamily: "Inter, sans-serif" }}>
+                Order Placed
+              </p>
+              <p className="text-[#3E2723] font-semibold" style={{ fontFamily: "Cinzel, serif" }}>
+                #{orderNumber}
+              </p>
+            </div>
           </div>
-          <Link
-            href="/shop"
-            className="inline-flex items-center gap-2 px-8 py-3.5 bg-[#3E2723] text-[#D7CCC8] font-semibold text-sm tracking-widest uppercase rounded hover:bg-[#5D4037] transition-colors"
-            style={{ fontFamily: "Inter, sans-serif" }}
-          >
-            Continue Shopping
-          </Link>
+
+          {/* Venmo payment card */}
+          <div className="bg-white border border-[#D7CCC8] rounded-lg overflow-hidden shadow-sm">
+            {/* Venmo header */}
+            <div className="bg-[#008CFF] px-6 py-5 flex items-center gap-3">
+              <svg viewBox="0 0 24 24" className="w-8 h-8 fill-white flex-shrink-0" aria-hidden="true">
+                <path d="M19.1 1c.8 1.3 1.2 2.7 1.2 4.5 0 5.6-4.8 12.9-8.7 18H5.2L2 2.5l6.3-.6 1.8 13.3c1.7-2.8 3.8-7.2 3.8-10.2 0-1.6-.3-2.7-.7-3.6L19.1 1z" />
+              </svg>
+              <div>
+                <p className="text-white font-bold text-lg" style={{ fontFamily: "Inter, sans-serif" }}>
+                  Complete Your Payment on Venmo
+                </p>
+                <p className="text-blue-100 text-sm" style={{ fontFamily: "Inter, sans-serif" }}>
+                  Your order is reserved. Send payment to confirm it.
+                </p>
+              </div>
+            </div>
+
+            <div className="px-6 py-6 space-y-5">
+              {/* Payment details */}
+              <div className="bg-[#F5F0EB] rounded-lg p-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63]" style={{ fontFamily: "Inter, sans-serif" }}>
+                    Pay to
+                  </span>
+                  <span className="font-bold text-[#3E2723] text-lg" style={{ fontFamily: "Inter, sans-serif" }}>
+                    {hasVenmoUsername ? `@${VENMO_USERNAME}` : "@mrtodds-woodcrafts"}
+                  </span>
+                </div>
+                <div className="border-t border-[#D7CCC8]" />
+                <div className="flex justify-between items-center">
+                  <span className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63]" style={{ fontFamily: "Inter, sans-serif" }}>
+                    Amount
+                  </span>
+                  <span className="font-bold text-[#3E2723] text-2xl" style={{ fontFamily: "Cinzel, serif" }}>
+                    ${amountDollars}
+                  </span>
+                </div>
+                <div className="border-t border-[#D7CCC8]" />
+                <div className="flex justify-between items-start gap-4">
+                  <span className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] flex-shrink-0" style={{ fontFamily: "Inter, sans-serif" }}>
+                    Note / Memo
+                  </span>
+                  <span className="text-[#3E2723] text-sm text-right font-medium" style={{ fontFamily: "Inter, sans-serif" }}>
+                    {payNote}
+                  </span>
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              {hasVenmoUsername ? (
+                <div className="space-y-3">
+                  {/* Mobile: open Venmo app */}
+                  <a
+                    href={venmoAppUrl(VENMO_USERNAME!, amountDollars, payNote)}
+                    className="flex items-center justify-center gap-2 w-full py-3.5 bg-[#008CFF] text-white font-bold text-sm tracking-wide rounded-lg hover:bg-[#0077DD] transition-colors"
+                    style={{ fontFamily: "Inter, sans-serif" }}
+                  >
+                    <Smartphone className="w-4 h-4" />
+                    Open Venmo App to Pay
+                  </a>
+                  {/* Fallback: Venmo web */}
+                  <a
+                    href={venmoWebUrl(VENMO_USERNAME!, amountDollars, payNote)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full py-3 border border-[#008CFF] text-[#008CFF] font-semibold text-sm rounded-lg hover:bg-blue-50 transition-colors"
+                    style={{ fontFamily: "Inter, sans-serif" }}
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    Pay on Venmo.com
+                  </a>
+                </div>
+              ) : (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm text-amber-800" style={{ fontFamily: "Lora, serif" }}>
+                  <strong>To enable one-tap Venmo links</strong>, set <code className="font-mono bg-amber-100 px-1 rounded">VITE_VENMO_USERNAME</code> in your environment to your Venmo handle (without the @).
+                </div>
+              )}
+
+              {/* Manual payment fallback note */}
+              <div className="border-t border-[#D7CCC8] pt-4 text-sm text-[#5D4037] space-y-1" style={{ fontFamily: "Lora, serif" }}>
+                <p>
+                  <strong className="text-[#3E2723]">No Venmo?</strong> Todd will follow up within 24 hours at <strong>{customer.email}</strong> to arrange payment by check or cash.
+                </p>
+                <p className="text-xs text-[#8D6E63]">
+                  Your order is held for 48 hours while awaiting payment. Estimated shipping: 3–7 business days after payment is received.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-8 text-center">
+            <Link
+              href="/shop"
+              className="inline-flex items-center gap-2 px-8 py-3.5 bg-[#3E2723] text-[#D7CCC8] font-semibold text-sm tracking-widest uppercase rounded hover:bg-[#5D4037] transition-colors"
+              style={{ fontFamily: "Inter, sans-serif" }}
+            >
+              Continue Shopping
+            </Link>
+          </div>
         </div>
       </div>
     );
@@ -179,6 +294,15 @@ export default function Checkout() {
               </div>
             </div>
           ))}
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-px bg-[#D7CCC8]" />
+            <div className="flex items-center gap-1.5 text-xs font-medium text-[#8D6E63]" style={{ fontFamily: "Inter, sans-serif" }}>
+              <div className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold bg-[#D7CCC8] text-[#8D6E63]">
+                3
+              </div>
+              <span className="hidden sm:inline">Pay via Venmo</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -367,12 +491,18 @@ export default function Checkout() {
                   </div>
                 </div>
 
-                <div className="mt-6 p-4 bg-[#F5F0EB] rounded border border-[#D7CCC8] text-sm text-[#5D4037]" style={{ fontFamily: "Lora, serif" }}>
-                  <p className="font-semibold text-[#3E2723] mb-1" style={{ fontFamily: "Cinzel, serif" }}>
-                    Note on Payment
-                  </p>
-                  <p>
-                    This site currently processes orders manually. After placing your order, Todd will contact you within 24 hours to arrange payment via Venmo, PayPal, or check.
+                {/* Venmo payment preview */}
+                <div className="mt-6 p-4 bg-[#F5F0EB] rounded border border-[#D7CCC8]">
+                  <div className="flex items-center gap-2 mb-2">
+                    <svg viewBox="0 0 24 24" className="w-4 h-4 fill-[#008CFF]" aria-hidden="true">
+                      <path d="M19.1 1c.8 1.3 1.2 2.7 1.2 4.5 0 5.6-4.8 12.9-8.7 18H5.2L2 2.5l6.3-.6 1.8 13.3c1.7-2.8 3.8-7.2 3.8-10.2 0-1.6-.3-2.7-.7-3.6L19.1 1z" />
+                    </svg>
+                    <p className="font-semibold text-[#3E2723] text-sm" style={{ fontFamily: "Cinzel, serif" }}>
+                      Payment via Venmo
+                    </p>
+                  </div>
+                  <p className="text-sm text-[#5D4037]" style={{ fontFamily: "Lora, serif" }}>
+                    After placing your order you will be shown Todd's Venmo handle and a one-tap link to send the exact amount. Your order is held for 48 hours.
                   </p>
                 </div>
 
@@ -388,7 +518,7 @@ export default function Checkout() {
                   className="mt-6 w-full py-3.5 bg-[#3E2723] text-[#D7CCC8] font-semibold text-sm tracking-widest uppercase rounded hover:bg-[#5D4037] transition-colors disabled:opacity-60"
                   style={{ fontFamily: "Inter, sans-serif" }}
                 >
-                  {placeOrder.isPending ? "Placing Order..." : "Place Order"}
+                  {placeOrder.isPending ? "Placing Order..." : "Place Order — Pay via Venmo"}
                 </button>
               </div>
             )}
