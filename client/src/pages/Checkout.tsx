@@ -2,10 +2,10 @@ import { useCart } from "@/contexts/CartContext";
 import { trpc } from "@/lib/trpc";
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, Lock, ShoppingBag, Check } from "lucide-react";
+import { ArrowLeft, Lock, ShoppingBag, Check, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 
-type Step = "info" | "shipping" | "review";
+type Step = "info" | "shipping" | "payment";
 
 interface CustomerInfo {
   firstName: string;
@@ -23,6 +23,8 @@ interface ShippingInfo {
   country: string;
 }
 
+const VENMO_HANDLE = import.meta.env.VITE_VENMO_HANDLE || "@MrToddsWoodcrafts";
+
 const US_STATES = [
   "AL","AK","AZ","AR","CA","CO","CT","DE","FL","GA","HI","ID","IL","IN","IA",
   "KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH","NJ",
@@ -35,6 +37,7 @@ export default function Checkout() {
   const [, navigate] = useLocation();
   const [step, setStep] = useState<Step>("info");
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
+  const [orderTotal, setOrderTotal] = useState<number>(0);
 
   const [customer, setCustomer] = useState<CustomerInfo>({
     firstName: "", lastName: "", email: "", phone: "",
@@ -46,14 +49,14 @@ export default function Checkout() {
   const formatPrice = (cents: number) =>
     new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
 
-  const shippingCost = subtotal >= 7500 ? 0 : 895; // free over $75
+  const shippingCost = subtotal >= 7500 ? 0 : 895;
   const total = subtotal + shippingCost;
 
   const placeOrder = trpc.orders.create.useMutation({
     onSuccess: (data) => {
       setOrderNumber(data.orderNumber);
+      setOrderTotal(total);
       clearCart();
-      setStep("review");
     },
     onError: () => {
       toast.error("Failed to place order. Please try again.");
@@ -73,6 +76,7 @@ export default function Checkout() {
         zip: shipping.zip,
         country: shipping.country,
       },
+      paymentMethod: "VENMO",
       items: items.map((i) => ({
         productId: i.productId,
         quantity: i.quantity,
@@ -101,8 +105,7 @@ export default function Checkout() {
     );
   }
 
-  // ─── Order Confirmation ────────────────────────────────────────────────────
-  if (step === "review" && orderNumber) {
+  if (orderNumber) {
     return (
       <div className="min-h-screen bg-[#F5F0EB] flex items-center justify-center px-4">
         <div className="max-w-lg w-full text-center">
@@ -113,23 +116,44 @@ export default function Checkout() {
             className="font-cinzel text-[#3E2723] text-3xl mb-3"
             style={{ fontFamily: "Cinzel, serif" }}
           >
-            Order Confirmed!
+            Order Placed
           </h1>
           <p className="text-[#5D4037] mb-2" style={{ fontFamily: "Lora, serif" }}>
-            Thank you for your order. Todd will begin work on your pieces shortly.
+            Thank you for your order. One last step: send payment via Venmo to complete your purchase.
           </p>
+
           <div className="bg-white border border-[#D7CCC8] rounded-lg p-6 my-6 text-left">
             <p className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-1" style={{ fontFamily: "Inter, sans-serif" }}>
               Order Number
             </p>
-            <p className="font-cinzel text-[#3E2723] text-xl" style={{ fontFamily: "Cinzel, serif" }}>
+            <p className="font-cinzel text-[#3E2723] text-xl mb-4" style={{ fontFamily: "Cinzel, serif" }}>
               #{orderNumber}
             </p>
-            <p className="text-sm text-[#8D6E63] mt-3" style={{ fontFamily: "Inter, sans-serif" }}>
+
+            <div className="bg-[#008CFF]/5 border border-[#008CFF]/20 rounded-lg p-5 mb-4">
+              <div className="flex items-center gap-2 mb-3">
+                <Smartphone className="w-5 h-5 text-[#008CFF]" />
+                <p className="font-semibold text-[#3E2723]" style={{ fontFamily: "Inter, sans-serif" }}>
+                  Pay with Venmo
+                </p>
+              </div>
+              <div className="space-y-2 text-sm" style={{ fontFamily: "Inter, sans-serif" }}>
+                <p className="text-[#5D4037]">
+                  Send <span className="font-bold text-[#3E2723]">{formatPrice(orderTotal)}</span> to:
+                </p>
+                <p className="text-lg font-bold text-[#008CFF]">{VENMO_HANDLE}</p>
+                <p className="text-[#8D6E63] text-xs mt-2">
+                  Include your order number <span className="font-semibold">#{orderNumber}</span> in the Venmo note.
+                </p>
+              </div>
+            </div>
+
+            <p className="text-sm text-[#8D6E63]" style={{ fontFamily: "Inter, sans-serif" }}>
               A confirmation email will be sent to <strong>{customer.email}</strong>.
+              Once payment is received, Todd will begin work on your pieces.
             </p>
             <p className="text-sm text-[#8D6E63] mt-2" style={{ fontFamily: "Inter, sans-serif" }}>
-              Estimated shipping: 3–7 business days (made-to-order pieces: 2–4 weeks).
+              Estimated shipping: 3-7 business days (made-to-order pieces: 2-4 weeks).
             </p>
           </div>
           <Link
@@ -164,7 +188,7 @@ export default function Checkout() {
       {/* Progress */}
       <div className="bg-white border-b border-[#D7CCC8] py-3">
         <div className="max-w-5xl mx-auto px-4 flex items-center gap-4">
-          {(["info", "shipping"] as Step[]).map((s, i) => (
+          {(["info", "shipping", "payment"] as Step[]).map((s, i) => (
             <div key={s} className="flex items-center gap-2">
               {i > 0 && <div className="w-8 h-px bg-[#D7CCC8]" />}
               <div className={`flex items-center gap-1.5 text-xs font-medium ${
@@ -175,7 +199,9 @@ export default function Checkout() {
                 }`}>
                   {i + 1}
                 </div>
-                <span className="hidden sm:inline capitalize">{s === "info" ? "Your Info" : "Shipping"}</span>
+                <span className="hidden sm:inline capitalize">
+                  {s === "info" ? "Your Info" : s === "shipping" ? "Shipping" : "Payment"}
+                </span>
               </div>
             </div>
           ))}
@@ -184,7 +210,6 @@ export default function Checkout() {
 
       <div className="max-w-5xl mx-auto px-4 py-10">
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-10">
-          {/* ─── Form ──────────────────────────────────────────────────────── */}
           <div className="lg:col-span-3">
             {step === "info" && (
               <div className="bg-white border border-[#D7CCC8] rounded-lg p-6">
@@ -367,34 +392,93 @@ export default function Checkout() {
                   </div>
                 </div>
 
-                <div className="mt-6 p-4 bg-[#F5F0EB] rounded border border-[#D7CCC8] text-sm text-[#5D4037]" style={{ fontFamily: "Lora, serif" }}>
-                  <p className="font-semibold text-[#3E2723] mb-1" style={{ fontFamily: "Cinzel, serif" }}>
-                    Note on Payment
-                  </p>
-                  <p>
-                    This site currently processes orders manually. After placing your order, Todd will contact you within 24 hours to arrange payment via Venmo, PayPal, or check.
-                  </p>
-                </div>
-
                 <button
                   onClick={() => {
                     if (!shipping.address1 || !shipping.city || !shipping.zip) {
                       toast.error("Please fill in all required shipping fields.");
                       return;
                     }
-                    handlePlaceOrder();
+                    setStep("payment");
                   }}
+                  className="mt-6 w-full py-3.5 bg-[#3E2723] text-[#D7CCC8] font-semibold text-sm tracking-widest uppercase rounded hover:bg-[#5D4037] transition-colors"
+                  style={{ fontFamily: "Inter, sans-serif" }}
+                >
+                  Continue to Payment
+                </button>
+              </div>
+            )}
+
+            {step === "payment" && (
+              <div className="bg-white border border-[#D7CCC8] rounded-lg p-6">
+                <button
+                  onClick={() => setStep("shipping")}
+                  className="flex items-center gap-1 text-sm text-[#8D6E63] hover:text-[#3E2723] mb-4 transition-colors"
+                  style={{ fontFamily: "Inter, sans-serif" }}
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" /> Back
+                </button>
+                <h2
+                  className="font-cinzel text-[#3E2723] text-xl mb-6"
+                  style={{ fontFamily: "Cinzel, serif" }}
+                >
+                  Payment
+                </h2>
+
+                <div className="bg-[#008CFF]/5 border border-[#008CFF]/20 rounded-lg p-6 mb-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-full bg-[#008CFF] flex items-center justify-center">
+                      <Smartphone className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-semibold text-[#3E2723] text-lg" style={{ fontFamily: "Inter, sans-serif" }}>
+                        Pay with Venmo
+                      </p>
+                      <p className="text-xs text-[#8D6E63]" style={{ fontFamily: "Inter, sans-serif" }}>
+                        Fast and secure payment
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-white rounded-lg p-4 border border-[#008CFF]/10">
+                    <p className="text-sm text-[#5D4037] mb-2" style={{ fontFamily: "Inter, sans-serif" }}>
+                      After placing your order, send <span className="font-bold text-[#3E2723]">{formatPrice(total)}</span> to:
+                    </p>
+                    <p className="text-2xl font-bold text-[#008CFF] mb-2">{VENMO_HANDLE}</p>
+                    <p className="text-xs text-[#8D6E63]" style={{ fontFamily: "Inter, sans-serif" }}>
+                      Include your order number in the Venmo note so Todd can match your payment.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="bg-[#F5F0EB] rounded-lg p-4 mb-6 text-sm text-[#5D4037]" style={{ fontFamily: "Lora, serif" }}>
+                  <p className="font-semibold text-[#3E2723] mb-2" style={{ fontFamily: "Cinzel, serif" }}>
+                    How it works
+                  </p>
+                  <ol className="list-decimal list-inside space-y-1.5 text-[#5D4037]" style={{ fontFamily: "Inter, sans-serif" }}>
+                    <li>Place your order below to reserve your pieces</li>
+                    <li>Send payment via Venmo to <strong>{VENMO_HANDLE}</strong></li>
+                    <li>Todd confirms payment and begins crafting</li>
+                    <li>Your order ships when ready</li>
+                  </ol>
+                </div>
+
+                <button
+                  onClick={handlePlaceOrder}
                   disabled={placeOrder.isPending}
-                  className="mt-6 w-full py-3.5 bg-[#3E2723] text-[#D7CCC8] font-semibold text-sm tracking-widest uppercase rounded hover:bg-[#5D4037] transition-colors disabled:opacity-60"
+                  className="w-full py-3.5 bg-[#3E2723] text-[#D7CCC8] font-semibold text-sm tracking-widest uppercase rounded hover:bg-[#5D4037] transition-colors disabled:opacity-60"
                   style={{ fontFamily: "Inter, sans-serif" }}
                 >
                   {placeOrder.isPending ? "Placing Order..." : "Place Order"}
                 </button>
+
+                <p className="text-xs text-center text-[#8D6E63] mt-3" style={{ fontFamily: "Inter, sans-serif" }}>
+                  Your order will be confirmed once Venmo payment is received.
+                </p>
               </div>
             )}
           </div>
 
-          {/* ─── Order Summary ─────────────────────────────────────────────── */}
+          {/* Order Summary */}
           <div className="lg:col-span-2">
             <div className="bg-white border border-[#D7CCC8] rounded-lg p-6 sticky top-6">
               <h3
@@ -440,7 +524,7 @@ export default function Checkout() {
                 </div>
                 {shippingCost === 0 && (
                   <p className="text-xs text-emerald-600" style={{ fontFamily: "Inter, sans-serif" }}>
-                    ✓ Free shipping applied
+                    Free shipping on orders over $75
                   </p>
                 )}
                 <div className="flex justify-between font-semibold text-[#3E2723] pt-2 border-t border-[#D7CCC8]" style={{ fontFamily: "Inter, sans-serif" }}>
@@ -448,6 +532,15 @@ export default function Checkout() {
                   <span>{formatPrice(total)}</span>
                 </div>
               </div>
+
+              {step === "payment" && (
+                <div className="mt-4 pt-4 border-t border-[#D7CCC8]">
+                  <div className="flex items-center gap-2 text-xs text-[#008CFF]" style={{ fontFamily: "Inter, sans-serif" }}>
+                    <Smartphone className="w-3.5 h-3.5" />
+                    <span>Paying via Venmo</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>

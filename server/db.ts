@@ -183,6 +183,12 @@ export async function updateOrderStatus(id: number, status: string, trackingNumb
   await db.update(orders).set(updateData).where(eq(orders.id, id));
 }
 
+export async function updatePaymentStatus(id: number, paymentStatus: "PENDING" | "PAID" | "REFUNDED") {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  await db.update(orders).set({ paymentStatus }).where(eq(orders.id, id));
+}
+
 export async function getOrderItems(orderId: number) {
   const db = await getDb();
   if (!db) return [];
