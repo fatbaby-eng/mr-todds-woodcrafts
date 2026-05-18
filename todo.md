@@ -84,3 +84,18 @@
 - [x] Update footer brand statement to: "Hand-carved kitchen and home objects. Material-led, one of one. Made in Omaha, Nebraska."
 - [x] Add visible placeholder note in admin/site flagging hero image as needing replacement with real workshop photo (TODO comment in code + dimmed overlay on About page workshop image)
 - [x] Enforce voice guardrails: first person, "one of one", no em dashes, no marketing language throughout
+
+## Launch — Venmo Payments + mrtoddsworkshop.com Go-Live (May 18, 2026)
+- [x] Add `site_settings` table + DB helpers for owner-configurable shop config
+- [x] Add `VENMO` to the `orders.paymentMethod` enum and default new orders to VENMO
+- [x] Surface `settings.publicAll` to the storefront and `settings.adminAll` + `update` to the admin
+- [x] Replace the "Todd will contact you within 24 hours" checkout step with a real Venmo payment screen: amount, recipient, memo, `venmo://` deep link, web fallback, QR code
+- [x] Notify the shop owner via `notifyOwner` on every new order (line items, total, shipping address)
+- [x] Build `/admin/settings` page: Venmo handle, contact email, contact phone, shop-live toggle
+- [x] Add payment column + "Mark as Paid" quick action to the admin orders list/detail
+- [x] Wire the public contact page to the admin-configured contact email/phone
+- [x] Write `DEPLOYMENT.md` (settings, db migration, deploy, DNS for mrtoddsworkshop.com, smoke test, day-to-day workflow)
+- [ ] **Owner action** — log in to `/admin/settings`, fill in your Venmo handle and contact email, save
+- [ ] **Owner action** — push migration to prod (`pnpm db:push` with prod `DATABASE_URL`)
+- [ ] **Owner action** — click Deploy in the Manus dashboard
+- [ ] **Owner action** — point `mrtoddsworkshop.com` DNS at the Manus deployment (see `DEPLOYMENT.md`)

@@ -1,11 +1,12 @@
 import { useCart } from "@/contexts/CartContext";
 import { trpc } from "@/lib/trpc";
-import { useState } from "react";
-import { Link, useLocation } from "wouter";
-import { ArrowLeft, Lock, ShoppingBag, Check } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Link } from "wouter";
+import { ArrowLeft, Lock, ShoppingBag, Check, Copy, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
+import QRCodeLib from "qrcode";
 
-type Step = "info" | "shipping" | "review";
+type Step = "info" | "shipping" | "payment" | "done";
 
 interface CustomerInfo {
   firstName: string;
@@ -30,11 +31,46 @@ const US_STATES = [
   "VA","WA","WV","WI","WY",
 ];
 
+/**
+ * Builds a Venmo "pay" deep link.
+ * On iOS/Android, the `venmo://` URI opens the app directly with the
+ * recipient, amount, and memo pre-filled. On desktop, the same params via
+ * `https://venmo.com/?...` open the Venmo web profile.
+ *
+ * Docs: https://venmo.com/code (deep link spec)
+ */
+function buildVenmoLinks(opts: { username: string; amount: number; note: string }) {
+  const params = new URLSearchParams({
+    txn: "pay",
+    recipients: opts.username,
+    amount: opts.amount.toFixed(2),
+    note: opts.note,
+  });
+  return {
+    app: `venmo://paycharge?${params.toString()}`,
+    web: `https://account.venmo.com/pay?${params.toString()}`,
+  };
+}
+
+function VenmoQR({ url }: { url: string }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    if (canvasRef.current && url) {
+      QRCodeLib.toCanvas(canvasRef.current, url, {
+        width: 192,
+        margin: 2,
+        color: { dark: "#3E2723", light: "#FFFFFF" },
+      }).catch(console.error);
+    }
+  }, [url]);
+  return <canvas ref={canvasRef} className="rounded bg-white p-2 mx-auto" />;
+}
+
 export default function Checkout() {
   const { items, subtotal, clearCart } = useCart();
-  const [, navigate] = useLocation();
   const [step, setStep] = useState<Step>("info");
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
+  const [paidTotal, setPaidTotal] = useState<number>(0);
 
   const [customer, setCustomer] = useState<CustomerInfo>({
     firstName: "", lastName: "", email: "", phone: "",
@@ -42,6 +78,9 @@ export default function Checkout() {
   const [shipping, setShipping] = useState<ShippingInfo>({
     address1: "", address2: "", city: "", state: "NE", zip: "", country: "US",
   });
+
+  const { data: siteSettings } = trpc.settings.publicAll.useQuery();
+  const venmoUsername = siteSettings?.venmoUsername ?? null;
 
   const formatPrice = (cents: number) =>
     new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
@@ -52,8 +91,9 @@ export default function Checkout() {
   const placeOrder = trpc.orders.create.useMutation({
     onSuccess: (data) => {
       setOrderNumber(data.orderNumber);
+      setPaidTotal(total);
       clearCart();
-      setStep("review");
+      setStep("payment");
     },
     onError: () => {
       toast.error("Failed to place order. Please try again.");
@@ -65,6 +105,7 @@ export default function Checkout() {
       customerEmail: customer.email,
       customerName: `${customer.firstName} ${customer.lastName}`,
       customerPhone: customer.phone || undefined,
+      paymentMethod: "VENMO",
       shippingAddress: {
         line1: shipping.address1,
         line2: shipping.address2 || undefined,
@@ -101,8 +142,8 @@ export default function Checkout() {
     );
   }
 
-  // ─── Order Confirmation ────────────────────────────────────────────────────
-  if (step === "review" && orderNumber) {
+  // ─── Final Done state ──────────────────────────────────────────────────────
+  if (step === "done" && orderNumber) {
     return (
       <div className="min-h-screen bg-[#F5F0EB] flex items-center justify-center px-4">
         <div className="max-w-lg w-full text-center">
@@ -113,24 +154,21 @@ export default function Checkout() {
             className="font-cinzel text-[#3E2723] text-3xl mb-3"
             style={{ fontFamily: "Cinzel, serif" }}
           >
-            Order Confirmed!
+            Thank you!
           </h1>
           <p className="text-[#5D4037] mb-2" style={{ fontFamily: "Lora, serif" }}>
-            Thank you for your order. Todd will begin work on your pieces shortly.
+            Order <strong className="font-mono">#{orderNumber}</strong> is in.
+            Once your Venmo payment lands, Todd will confirm and begin work on your pieces.
           </p>
-          <div className="bg-white border border-[#D7CCC8] rounded-lg p-6 my-6 text-left">
-            <p className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-1" style={{ fontFamily: "Inter, sans-serif" }}>
-              Order Number
+          <div className="bg-white border border-[#D7CCC8] rounded-lg p-6 my-6 text-left text-sm text-[#5D4037] space-y-2" style={{ fontFamily: "Inter, sans-serif" }}>
+            <p>
+              <strong className="text-[#3E2723]">What happens next:</strong>
             </p>
-            <p className="font-cinzel text-[#3E2723] text-xl" style={{ fontFamily: "Cinzel, serif" }}>
-              #{orderNumber}
-            </p>
-            <p className="text-sm text-[#8D6E63] mt-3" style={{ fontFamily: "Inter, sans-serif" }}>
-              A confirmation email will be sent to <strong>{customer.email}</strong>.
-            </p>
-            <p className="text-sm text-[#8D6E63] mt-2" style={{ fontFamily: "Inter, sans-serif" }}>
-              Estimated shipping: 3–7 business days (made-to-order pieces: 2–4 weeks).
-            </p>
+            <ol className="list-decimal pl-5 space-y-1">
+              <li>Todd matches your Venmo payment to this order using the memo (<span className="font-mono">{orderNumber}</span>).</li>
+              <li>You'll get an email confirmation at <strong>{customer.email}</strong> when payment is verified.</li>
+              <li>In-stock pieces ship in 3–7 business days. Made-to-order pieces take 2–4 weeks.</li>
+            </ol>
           </div>
           <Link
             href="/shop"
@@ -139,6 +177,123 @@ export default function Checkout() {
           >
             Continue Shopping
           </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Venmo Payment Step ───────────────────────────────────────────────────
+  if (step === "payment" && orderNumber) {
+    const memo = `Order ${orderNumber}`;
+    const amountDollars = paidTotal / 100;
+    const links = venmoUsername
+      ? buildVenmoLinks({ username: venmoUsername, amount: amountDollars, note: memo })
+      : null;
+
+    return (
+      <div className="min-h-screen bg-[#F5F0EB]">
+        <div className="bg-[#3E2723] py-4 px-4">
+          <div className="max-w-5xl mx-auto flex items-center justify-between">
+            <Link href="/" className="flex items-center gap-2">
+              <span className="text-[#C9A227] font-cinzel text-lg font-semibold" style={{ fontFamily: "Cinzel, serif" }}>
+                Mr. Todd's Woodcrafts
+              </span>
+            </Link>
+            <div className="flex items-center gap-1 text-[#8D6E63] text-xs" style={{ fontFamily: "Inter, sans-serif" }}>
+              <Lock className="w-3.5 h-3.5" />
+              Secure Checkout
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-2xl mx-auto px-4 py-10">
+          <div className="bg-white border border-[#D7CCC8] rounded-lg p-6 md:p-8">
+            <p className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-2" style={{ fontFamily: "Inter, sans-serif" }}>
+              Step 3 of 3 — Payment
+            </p>
+            <h1 className="font-cinzel text-[#3E2723] text-2xl md:text-3xl mb-2" style={{ fontFamily: "Cinzel, serif" }}>
+              Pay with Venmo
+            </h1>
+            <p className="text-sm text-[#5D4037] mb-6" style={{ fontFamily: "Lora, serif" }}>
+              Order <span className="font-mono font-semibold">#{orderNumber}</span> is reserved. Send your payment via
+              Venmo below to confirm it.
+            </p>
+
+            {venmoUsername && links ? (
+              <>
+                <div className="bg-[#F5F0EB] rounded-lg border border-[#D7CCC8] p-5 mb-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm" style={{ fontFamily: "Inter, sans-serif" }}>
+                    <div>
+                      <p className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-1">Send to</p>
+                      <CopyableField value={`@${venmoUsername}`} copyValue={venmoUsername} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-1">Amount</p>
+                      <CopyableField value={formatPrice(paidTotal)} copyValue={amountDollars.toFixed(2)} />
+                    </div>
+                    <div className="sm:col-span-2">
+                      <p className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-1">Memo (required)</p>
+                      <CopyableField value={memo} copyValue={memo} />
+                      <p className="text-xs text-[#8D6E63] mt-1">
+                        The order number in the memo lets Todd match your payment to your order.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  <div>
+                    <a
+                      href={links.app}
+                      className="w-full flex items-center justify-center gap-2 py-3.5 bg-[#008CFF] text-white font-semibold text-sm tracking-widest uppercase rounded hover:bg-[#0078e7] transition-colors"
+                      style={{ fontFamily: "Inter, sans-serif" }}
+                    >
+                      Open Venmo
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                    <a
+                      href={links.web}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block text-center mt-2 text-xs text-[#5D4037] hover:text-[#3E2723] underline"
+                      style={{ fontFamily: "Inter, sans-serif" }}
+                    >
+                      Or open in browser
+                    </a>
+                    <p className="text-xs text-[#8D6E63] mt-3" style={{ fontFamily: "Inter, sans-serif" }}>
+                      The button above opens the Venmo app with the amount, recipient, and memo pre-filled. Review and tap Pay.
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-2" style={{ fontFamily: "Inter, sans-serif" }}>
+                      Or scan from your phone
+                    </p>
+                    <VenmoQR url={links.app} />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 mb-6 text-sm text-amber-900" style={{ fontFamily: "Inter, sans-serif" }}>
+                <p className="font-semibold mb-1">Venmo handle not yet configured.</p>
+                <p>
+                  Todd will email you at <strong>{customer.email}</strong> within 24 hours with a Venmo link for
+                  Order <span className="font-mono">#{orderNumber}</span>.
+                </p>
+              </div>
+            )}
+
+            <button
+              onClick={() => setStep("done")}
+              className="w-full py-3.5 bg-[#3E2723] text-[#D7CCC8] font-semibold text-sm tracking-widest uppercase rounded hover:bg-[#5D4037] transition-colors"
+              style={{ fontFamily: "Inter, sans-serif" }}
+            >
+              I've Sent the Payment
+            </button>
+            <p className="text-xs text-center text-[#8D6E63] mt-3" style={{ fontFamily: "Inter, sans-serif" }}>
+              Don't worry — even if you close this tab, your order is saved as
+              <span className="font-mono"> #{orderNumber}</span>.
+            </p>
+          </div>
         </div>
       </div>
     );
@@ -164,21 +319,25 @@ export default function Checkout() {
       {/* Progress */}
       <div className="bg-white border-b border-[#D7CCC8] py-3">
         <div className="max-w-5xl mx-auto px-4 flex items-center gap-4">
-          {(["info", "shipping"] as Step[]).map((s, i) => (
-            <div key={s} className="flex items-center gap-2">
-              {i > 0 && <div className="w-8 h-px bg-[#D7CCC8]" />}
-              <div className={`flex items-center gap-1.5 text-xs font-medium ${
-                step === s ? "text-[#3E2723]" : "text-[#8D6E63]"
-              }`} style={{ fontFamily: "Inter, sans-serif" }}>
-                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                  step === s ? "bg-[#3E2723] text-[#D7CCC8]" : "bg-[#D7CCC8] text-[#8D6E63]"
-                }`}>
-                  {i + 1}
+          {(["info", "shipping", "payment"] as Step[]).map((s, i) => {
+            const label = s === "info" ? "Your Info" : s === "shipping" ? "Shipping" : "Payment";
+            const active = step === s;
+            return (
+              <div key={s} className="flex items-center gap-2">
+                {i > 0 && <div className="w-8 h-px bg-[#D7CCC8]" />}
+                <div className={`flex items-center gap-1.5 text-xs font-medium ${
+                  active ? "text-[#3E2723]" : "text-[#8D6E63]"
+                }`} style={{ fontFamily: "Inter, sans-serif" }}>
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
+                    active ? "bg-[#3E2723] text-[#D7CCC8]" : "bg-[#D7CCC8] text-[#8D6E63]"
+                  }`}>
+                    {i + 1}
+                  </div>
+                  <span className="hidden sm:inline">{label}</span>
                 </div>
-                <span className="hidden sm:inline capitalize">{s === "info" ? "Your Info" : "Shipping"}</span>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 
@@ -369,10 +528,11 @@ export default function Checkout() {
 
                 <div className="mt-6 p-4 bg-[#F5F0EB] rounded border border-[#D7CCC8] text-sm text-[#5D4037]" style={{ fontFamily: "Lora, serif" }}>
                   <p className="font-semibold text-[#3E2723] mb-1" style={{ fontFamily: "Cinzel, serif" }}>
-                    Note on Payment
+                    Payment via Venmo
                   </p>
                   <p>
-                    This site currently processes orders manually. After placing your order, Todd will contact you within 24 hours to arrange payment via Venmo, PayPal, or check.
+                    Place your order and you'll get a one-tap Venmo payment screen on the next step with the
+                    exact amount and a memo pre-filled. Your order is reserved once we see your Venmo payment.
                   </p>
                 </div>
 
@@ -388,7 +548,7 @@ export default function Checkout() {
                   className="mt-6 w-full py-3.5 bg-[#3E2723] text-[#D7CCC8] font-semibold text-sm tracking-widest uppercase rounded hover:bg-[#5D4037] transition-colors disabled:opacity-60"
                   style={{ fontFamily: "Inter, sans-serif" }}
                 >
-                  {placeOrder.isPending ? "Placing Order..." : "Place Order"}
+                  {placeOrder.isPending ? "Placing Order..." : "Continue to Payment"}
                 </button>
               </div>
             )}
@@ -452,6 +612,32 @@ export default function Checkout() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function CopyableField({ value, copyValue }: { value: string; copyValue: string }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <div className="flex items-center justify-between gap-2 bg-white rounded border border-[#D7CCC8] px-3 py-2">
+      <span className="font-mono text-sm text-[#3E2723] truncate" style={{ fontFamily: "Inter, sans-serif" }}>
+        {value}
+      </span>
+      <button
+        type="button"
+        onClick={() => {
+          navigator.clipboard.writeText(copyValue).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          });
+        }}
+        className="flex items-center gap-1 text-xs text-[#8D6E63] hover:text-[#3E2723] transition-colors"
+        style={{ fontFamily: "Inter, sans-serif" }}
+        aria-label="Copy"
+      >
+        {copied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+        {copied ? "Copied" : "Copy"}
+      </button>
     </div>
   );
 }

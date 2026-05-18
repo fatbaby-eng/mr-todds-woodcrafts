@@ -21,6 +21,7 @@ import AdminOrders from "./pages/admin/AdminOrders";
 import AdminInventory from "./pages/admin/AdminInventory";
 import AdminShows from "./pages/admin/AdminShows";
 import AdminSubscribers from "./pages/admin/AdminSubscribers";
+import AdminSettings from "./pages/admin/AdminSettings";
 
 // Kiosk
 import Kiosk from "./pages/Kiosk";
@@ -43,6 +44,7 @@ function Router() {
       <Route path="/admin/inventory" component={AdminInventory} />
       <Route path="/admin/shows" component={AdminShows} />
       <Route path="/admin/subscribers" component={AdminSubscribers} />
+      <Route path="/admin/settings" component={AdminSettings} />
 
       {/* Kiosk / Trade-show display */}
       <Route path="/kiosk" component={Kiosk} />

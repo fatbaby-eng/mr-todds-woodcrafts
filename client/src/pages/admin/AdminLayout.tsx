@@ -2,7 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Link, useLocation } from "wouter";
 import {
   LayoutDashboard, Package, ShoppingCart, Layers, CalendarDays,
-  Users, LogOut, Menu, X, ChevronRight, AlertTriangle,
+  Users, LogOut, Menu, X, ChevronRight, AlertTriangle, Settings,
 } from "lucide-react";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
@@ -15,6 +15,7 @@ const NAV = [
   { href: "/admin/inventory", label: "Inventory", icon: Layers },
   { href: "/admin/shows", label: "Trade Shows", icon: CalendarDays },
   { href: "/admin/subscribers", label: "Subscribers", icon: Users },
+  { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {

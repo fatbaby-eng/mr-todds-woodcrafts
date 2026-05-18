@@ -1,10 +1,11 @@
 import { trpc } from "@/lib/trpc";
 import { useState } from "react";
-import { X, ChevronDown } from "lucide-react";
+import { X, ChevronDown, Check, DollarSign, RefreshCw } from "lucide-react";
 import AdminLayout from "./AdminLayout";
 import { toast } from "sonner";
 
 const STATUS_OPTIONS = ["PENDING", "CONFIRMED", "CARVING", "FINISHED", "SHIPPED", "DELIVERED", "CANCELLED"] as const;
+const PAYMENT_STATUS_OPTIONS = ["PENDING", "PAID", "REFUNDED"] as const;
 const STATUS_COLORS: Record<string, string> = {
   PENDING: "bg-yellow-900/40 text-yellow-400 border-yellow-900/50",
   CONFIRMED: "bg-blue-900/40 text-blue-400 border-blue-900/50",
@@ -13,6 +14,11 @@ const STATUS_COLORS: Record<string, string> = {
   SHIPPED: "bg-purple-900/40 text-purple-400 border-purple-900/50",
   DELIVERED: "bg-emerald-900/40 text-emerald-400 border-emerald-900/50",
   CANCELLED: "bg-red-900/40 text-red-400 border-red-900/50",
+};
+const PAYMENT_COLORS: Record<string, string> = {
+  PENDING: "bg-yellow-900/40 text-yellow-400 border-yellow-900/50",
+  PAID: "bg-emerald-900/40 text-emerald-400 border-emerald-900/50",
+  REFUNDED: "bg-red-900/40 text-red-400 border-red-900/50",
 };
 
 const formatPrice = (cents: number) =>
@@ -39,6 +45,15 @@ export default function AdminOrders() {
       toast.success("Order status updated.");
     },
     onError: () => toast.error("Failed to update status."),
+  });
+
+  const updatePayment = trpc.orders.updatePaymentStatus.useMutation({
+    onSuccess: () => {
+      utils.orders.list.invalidate();
+      utils.orders.byId.invalidate({ id: selectedId! });
+      toast.success("Payment status updated.");
+    },
+    onError: () => toast.error("Failed to update payment status."),
   });
 
   const shippingAddr = orderDetail?.shippingAddress as {
@@ -82,7 +97,7 @@ export default function AdminOrders() {
               <table className="w-full text-sm" style={{ fontFamily: "Inter, sans-serif" }}>
                 <thead>
                   <tr className="border-b border-[#2D1A0E]">
-                    {["Order #", "Customer", "Date", "Items", "Total", "Status", ""].map((h) => (
+                    {["Order #", "Customer", "Date", "Total", "Payment", "Status", ""].map((h) => (
                       <th key={h} className="px-4 py-3 text-left text-xs font-semibold tracking-widest uppercase text-[#8D6E63]">
                         {h}
                       </th>
@@ -106,9 +121,13 @@ export default function AdminOrders() {
                       <td className="px-4 py-3 text-[#8D6E63]">
                         {new Date(order.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                       </td>
-                      <td className="px-4 py-3 text-[#8D6E63]">—</td>
                       <td className="px-4 py-3 text-[#F5F0EB] font-semibold">
                         {formatPrice(order.totalAmount)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${PAYMENT_COLORS[order.paymentStatus] ?? "bg-[#2D1A0E] text-[#8D6E63] border-[#2D1A0E]"}`}>
+                          {order.paymentMethod === "VENMO" ? "Venmo: " : ""}{order.paymentStatus}
+                        </span>
                       </td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${STATUS_COLORS[order.status] ?? "bg-[#2D1A0E] text-[#8D6E63] border-[#2D1A0E]"}`}>
@@ -144,6 +163,36 @@ export default function AdminOrders() {
               <div className="py-12 text-center text-[#8D6E63]" style={{ fontFamily: "Inter, sans-serif" }}>Loading…</div>
             ) : (
               <div className="p-6 space-y-6">
+                {/* Payment status + quick "Mark as Paid" */}
+                <div className="bg-[#0F0A05] border border-[#2D1A0E] rounded-lg p-4 flex flex-wrap items-center gap-3">
+                  <div className="flex items-center gap-2 text-xs text-[#8D6E63] font-semibold tracking-widest uppercase" style={{ fontFamily: "Inter, sans-serif" }}>
+                    <DollarSign className="w-3.5 h-3.5" />
+                    {orderDetail.paymentMethod}
+                  </div>
+                  <div className="relative">
+                    <select
+                      value={orderDetail.paymentStatus}
+                      onChange={(e) => updatePayment.mutate({ id: orderDetail.id, paymentStatus: e.target.value as typeof PAYMENT_STATUS_OPTIONS[number] })}
+                      className={`appearance-none pl-3 pr-8 py-1.5 rounded border text-xs font-semibold bg-transparent cursor-pointer focus:outline-none ${PAYMENT_COLORS[orderDetail.paymentStatus] ?? "border-[#2D1A0E] text-[#8D6E63]"}`}
+                      style={{ fontFamily: "Inter, sans-serif" }}
+                    >
+                      {PAYMENT_STATUS_OPTIONS.map((s) => <option key={s} value={s} className="bg-[#1A1008] text-[#F5F0EB]">{s}</option>)}
+                    </select>
+                    <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none" />
+                  </div>
+                  {orderDetail.paymentStatus === "PENDING" && (
+                    <button
+                      onClick={() => updatePayment.mutate({ id: orderDetail.id, paymentStatus: "PAID" })}
+                      disabled={updatePayment.isPending}
+                      className="ml-auto inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold rounded transition-colors disabled:opacity-60"
+                      style={{ fontFamily: "Inter, sans-serif" }}
+                    >
+                      {updatePayment.isPending ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                      Mark as Paid
+                    </button>
+                  )}
+                </div>
+
                 {/* Status update */}
                 <div className="flex items-center gap-4">
                   <span className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63]" style={{ fontFamily: "Inter, sans-serif" }}>

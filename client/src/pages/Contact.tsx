@@ -1,14 +1,20 @@
 import { trpc } from "@/lib/trpc";
 import { useState } from "react";
-import { Mail, MapPin, Clock, Send, Check } from "lucide-react";
+import { Mail, MapPin, Clock, Phone, Send, Check } from "lucide-react";
 import PublicLayout from "@/components/PublicLayout";
 import { toast } from "sonner";
+
+const DEFAULT_CONTACT_EMAIL = "todd@mrtoddsworkshop.com";
 
 export default function Contact() {
   const [form, setForm] = useState({
     name: "", email: "", subject: "general", message: "",
   });
   const [submitted, setSubmitted] = useState(false);
+
+  const { data: settings } = trpc.settings.publicAll.useQuery();
+  const contactEmail = settings?.contactEmail || DEFAULT_CONTACT_EMAIL;
+  const contactPhone = settings?.contactPhone || "";
 
   const sendMessage = trpc.contact.send.useMutation({
     onSuccess: () => {
@@ -64,11 +70,24 @@ export default function Contact() {
                       <p className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-0.5" style={{ fontFamily: "Inter, sans-serif" }}>
                         Email
                       </p>
-                      <a href="mailto:todd@mrtodds.com" className="text-sm text-[#3E2723] hover:text-[#C9A227] transition-colors" style={{ fontFamily: "Inter, sans-serif" }}>
-                        todd@mrtodds.com
+                      <a href={`mailto:${contactEmail}`} className="text-sm text-[#3E2723] hover:text-[#C9A227] transition-colors" style={{ fontFamily: "Inter, sans-serif" }}>
+                        {contactEmail}
                       </a>
                     </div>
                   </div>
+                  {contactPhone && (
+                    <div className="flex items-start gap-3">
+                      <Phone className="w-5 h-5 text-[#C9A227] mt-0.5 flex-shrink-0" strokeWidth={1.5} />
+                      <div>
+                        <p className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-0.5" style={{ fontFamily: "Inter, sans-serif" }}>
+                          Phone
+                        </p>
+                        <a href={`tel:${contactPhone.replace(/[^0-9+]/g, "")}`} className="text-sm text-[#3E2723] hover:text-[#C9A227] transition-colors" style={{ fontFamily: "Inter, sans-serif" }}>
+                          {contactPhone}
+                        </a>
+                      </div>
+                    </div>
+                  )}
                   <div className="flex items-start gap-3">
                     <MapPin className="w-5 h-5 text-[#C9A227] mt-0.5 flex-shrink-0" strokeWidth={1.5} />
                     <div>
