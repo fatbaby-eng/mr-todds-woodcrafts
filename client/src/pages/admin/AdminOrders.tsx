@@ -5,6 +5,7 @@ import AdminLayout from "./AdminLayout";
 import { toast } from "sonner";
 
 const STATUS_OPTIONS = ["PENDING", "CONFIRMED", "CARVING", "FINISHED", "SHIPPED", "DELIVERED", "CANCELLED"] as const;
+const PAYMENT_STATUS_OPTIONS = ["PENDING", "PAID", "REFUNDED"] as const;
 const STATUS_COLORS: Record<string, string> = {
   PENDING: "bg-yellow-900/40 text-yellow-400 border-yellow-900/50",
   CONFIRMED: "bg-blue-900/40 text-blue-400 border-blue-900/50",
@@ -13,6 +14,18 @@ const STATUS_COLORS: Record<string, string> = {
   SHIPPED: "bg-purple-900/40 text-purple-400 border-purple-900/50",
   DELIVERED: "bg-emerald-900/40 text-emerald-400 border-emerald-900/50",
   CANCELLED: "bg-red-900/40 text-red-400 border-red-900/50",
+};
+const PAYMENT_STATUS_COLORS: Record<string, string> = {
+  PENDING: "bg-yellow-900/40 text-yellow-400 border-yellow-900/50",
+  PAID: "bg-emerald-900/40 text-emerald-400 border-emerald-900/50",
+  REFUNDED: "bg-purple-900/40 text-purple-400 border-purple-900/50",
+};
+const PAYMENT_LABELS: Record<string, string> = {
+  VENMO: "Venmo",
+  STRIPE: "Stripe",
+  PAYPAL: "PayPal",
+  CASH: "Cash",
+  CHECK: "Check",
 };
 
 const formatPrice = (cents: number) =>
@@ -39,6 +52,14 @@ export default function AdminOrders() {
       toast.success("Order status updated.");
     },
     onError: () => toast.error("Failed to update status."),
+  });
+  const updatePaymentStatus = trpc.orders.updatePaymentStatus.useMutation({
+    onSuccess: () => {
+      utils.orders.list.invalidate();
+      utils.orders.byId.invalidate({ id: selectedId! });
+      toast.success("Payment status updated.");
+    },
+    onError: () => toast.error("Failed to update payment status."),
   });
 
   const shippingAddr = orderDetail?.shippingAddress as {
@@ -82,7 +103,7 @@ export default function AdminOrders() {
               <table className="w-full text-sm" style={{ fontFamily: "Inter, sans-serif" }}>
                 <thead>
                   <tr className="border-b border-[#2D1A0E]">
-                    {["Order #", "Customer", "Date", "Items", "Total", "Status", ""].map((h) => (
+                    {["Order #", "Customer", "Date", "Items", "Total", "Payment", "Status", ""].map((h) => (
                       <th key={h} className="px-4 py-3 text-left text-xs font-semibold tracking-widest uppercase text-[#8D6E63]">
                         {h}
                       </th>
@@ -109,6 +130,10 @@ export default function AdminOrders() {
                       <td className="px-4 py-3 text-[#8D6E63]">—</td>
                       <td className="px-4 py-3 text-[#F5F0EB] font-semibold">
                         {formatPrice(order.totalAmount)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <p className="text-xs text-[#F5F0EB]">{PAYMENT_LABELS[order.paymentMethod] ?? order.paymentMethod}</p>
+                        <p className="text-[10px] uppercase tracking-widest text-[#8D6E63]">{order.paymentStatus}</p>
                       </td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${STATUS_COLORS[order.status] ?? "bg-[#2D1A0E] text-[#8D6E63] border-[#2D1A0E]"}`}>
@@ -159,6 +184,33 @@ export default function AdminOrders() {
                       {STATUS_OPTIONS.map((s) => <option key={s} value={s} className="bg-[#1A1008] text-[#F5F0EB]">{s}</option>)}
                     </select>
                     <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 rounded border border-[#2D1A0E] bg-[#120B06] p-4">
+                  <div>
+                    <p className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-1" style={{ fontFamily: "Inter, sans-serif" }}>
+                      Payment Method
+                    </p>
+                    <p className="text-sm text-[#F5F0EB]" style={{ fontFamily: "Inter, sans-serif" }}>
+                      {PAYMENT_LABELS[orderDetail.paymentMethod] ?? orderDetail.paymentMethod}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-1" style={{ fontFamily: "Inter, sans-serif" }}>
+                      Payment Status
+                    </p>
+                    <div className="relative inline-block">
+                      <select
+                        value={orderDetail.paymentStatus}
+                        onChange={(e) => updatePaymentStatus.mutate({ id: orderDetail.id, paymentStatus: e.target.value as typeof PAYMENT_STATUS_OPTIONS[number] })}
+                        className={`appearance-none pl-3 pr-8 py-1.5 rounded border text-xs font-semibold bg-transparent cursor-pointer focus:outline-none ${PAYMENT_STATUS_COLORS[orderDetail.paymentStatus] ?? "border-[#2D1A0E] text-[#8D6E63]"}`}
+                        style={{ fontFamily: "Inter, sans-serif" }}
+                      >
+                        {PAYMENT_STATUS_OPTIONS.map((s) => <option key={s} value={s} className="bg-[#1A1008] text-[#F5F0EB]">{s}</option>)}
+                      </select>
+                      <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none" />
+                    </div>
                   </div>
                 </div>
 

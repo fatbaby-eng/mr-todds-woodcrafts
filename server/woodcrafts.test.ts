@@ -37,6 +37,7 @@ vi.mock("./db", () => ({
   getOrderById: vi.fn().mockResolvedValue(null),
   createOrder: vi.fn().mockResolvedValue({ orderId: 42, orderNumber: "WT-20260001" }),
   updateOrderStatus: vi.fn().mockResolvedValue(undefined),
+  updateOrderPaymentStatus: vi.fn().mockResolvedValue(undefined),
   getTradeShows: vi.fn().mockResolvedValue([
     {
       id: 1, name: "Nebraska Craft Fair", location: "Omaha, NE",
@@ -207,6 +208,19 @@ describe("orders.updateStatus", () => {
   it("rejects non-admin from updating order status", async () => {
     const caller = appRouter.createCaller(makeUserCtx());
     await expect(caller.orders.updateStatus({ id: 1, status: "CONFIRMED" })).rejects.toThrow();
+  });
+});
+
+describe("orders.updatePaymentStatus", () => {
+  it("allows admin to mark a Venmo payment as paid", async () => {
+    const caller = appRouter.createCaller(makeAdminCtx());
+    const result = await caller.orders.updatePaymentStatus({ id: 1, paymentStatus: "PAID" });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects non-admin from updating payment status", async () => {
+    const caller = appRouter.createCaller(makeUserCtx());
+    await expect(caller.orders.updatePaymentStatus({ id: 1, paymentStatus: "PAID" })).rejects.toThrow();
   });
 });
 

@@ -262,6 +262,9 @@ export default function ProductDetail() {
                       </>
                     )}
                   </button>
+                  <p className="text-xs text-[#8D6E63]" style={{ fontFamily: "Inter, sans-serif" }}>
+                    Checkout saves the order first, then shows the exact Venmo payment note to send.
+                  </p>
                 </div>
               ) : (
                 <div className="py-4 px-6 bg-[#D7CCC8] rounded text-center">
