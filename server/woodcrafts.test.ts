@@ -1,6 +1,8 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
+import * as db from "./db";
+import { notifyOwner } from "./_core/notification";
 
 // ─── Mock DB helpers ──────────────────────────────────────────────────────────
 vi.mock("./db", () => ({
@@ -74,6 +76,11 @@ vi.mock("./db", () => ({
 vi.mock("./_core/notification", () => ({
   notifyOwner: vi.fn().mockResolvedValue(true),
 }));
+
+beforeEach(() => {
+  vi.mocked(db.getDb).mockResolvedValue({} as never);
+  vi.mocked(notifyOwner).mockResolvedValue(true);
+});
 
 // ─── Context helpers ──────────────────────────────────────────────────────────
 function makePublicCtx(): TrpcContext {
@@ -194,6 +201,23 @@ describe("orders.create", () => {
     });
     expect(result.orderNumber).toMatch(/^MTW-\d{4}-\d+$/);
     expect(result.orderId).toBe(42);
+  });
+
+  it("falls back to manual notification when the database is unavailable", async () => {
+    vi.mocked(db.getDb).mockResolvedValue(null as never);
+
+    const caller = appRouter.createCaller(makePublicCtx());
+    const result = await caller.orders.create({
+      customerName: "Jane Doe",
+      customerEmail: "jane@example.com",
+      shippingAddress: { line1: "123 Main St", city: "Omaha", state: "NE", zip: "68102", country: "US" },
+      items: [{ productId: 1, productName: "Cherry Spoon", quantity: 1, price: 3800 }],
+      shippingCost: 895,
+    });
+
+    expect(result.orderNumber).toMatch(/^MTW-\d{4}-\d+$/);
+    expect(result.orderId).toBeNull();
+    expect(notifyOwner).toHaveBeenCalled();
   });
 });
 

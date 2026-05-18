@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Mail, MapPin, Clock, Send, Check } from "lucide-react";
 import PublicLayout from "@/components/PublicLayout";
 import { toast } from "sonner";
+import { SITE_CONFIG } from "@shared/storefront";
 
 export default function Contact() {
   const [form, setForm] = useState({
@@ -13,7 +14,7 @@ export default function Contact() {
   const sendMessage = trpc.contact.send.useMutation({
     onSuccess: () => {
       setSubmitted(true);
-      toast.success("Message sent! Todd will reply within 1-2 business days.");
+      toast.success(`Message sent! Todd will reply ${SITE_CONFIG.responseTime}.`);
     },
     onError: (_err: unknown) => {
       toast.error("Failed to send message. Please try again.");
@@ -40,7 +41,7 @@ export default function Contact() {
             Contact
           </h1>
           <p className="text-[#8D6E63] mt-4 max-w-md mx-auto" style={{ fontFamily: "Lora, serif" }}>
-            Questions about a piece, custom orders, wholesale inquiries — Todd reads every message.
+            Questions about a piece, custom orders, order status, or Venmo checkout - Todd reads every message.
           </p>
         </div>
       </div>
@@ -64,8 +65,8 @@ export default function Contact() {
                       <p className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-0.5" style={{ fontFamily: "Inter, sans-serif" }}>
                         Email
                       </p>
-                      <a href="mailto:todd@mrtodds.com" className="text-sm text-[#3E2723] hover:text-[#C9A227] transition-colors" style={{ fontFamily: "Inter, sans-serif" }}>
-                        todd@mrtodds.com
+                      <a href={`mailto:${SITE_CONFIG.contactEmail}`} className="text-sm text-[#3E2723] hover:text-[#C9A227] transition-colors" style={{ fontFamily: "Inter, sans-serif" }}>
+                        {SITE_CONFIG.contactEmail}
                       </a>
                     </div>
                   </div>
@@ -76,7 +77,7 @@ export default function Contact() {
                         Location
                       </p>
                       <p className="text-sm text-[#3E2723]" style={{ fontFamily: "Inter, sans-serif" }}>
-                        Omaha, Nebraska
+                        {SITE_CONFIG.location}
                       </p>
                     </div>
                   </div>
@@ -87,7 +88,7 @@ export default function Contact() {
                         Response Time
                       </p>
                       <p className="text-sm text-[#3E2723]" style={{ fontFamily: "Inter, sans-serif" }}>
-                        1–2 business days
+                        {SITE_CONFIG.responseTime}
                       </p>
                     </div>
                   </div>
@@ -103,7 +104,19 @@ export default function Contact() {
                   Custom Orders
                 </h3>
                 <p className="text-xs text-[#D7CCC8] leading-relaxed" style={{ fontFamily: "Lora, serif" }}>
-                  Todd accepts a limited number of custom commissions each month. Custom pieces typically take 2–4 weeks and start at $75. Describe what you have in mind and he'll get back to you with a quote.
+                  Todd accepts a limited number of custom commissions each month. Custom pieces typically take {SITE_CONFIG.madeToOrderLeadTime} and are quoted individually after a quick conversation about size, wood, and use.
+                </p>
+              </div>
+
+              <div className="bg-white border border-[#D7CCC8] rounded-lg p-5">
+                <h3
+                  className="font-cinzel text-[#3E2723] text-sm mb-2"
+                  style={{ fontFamily: "Cinzel, serif" }}
+                >
+                  Payment
+                </h3>
+                <p className="text-xs text-[#5D4037] leading-relaxed" style={{ fontFamily: "Lora, serif" }}>
+                  Online orders are confirmed manually for now, and Todd collects payment through Venmo after reviewing the order details.
                 </p>
               </div>
 
@@ -124,7 +137,7 @@ export default function Contact() {
                     Message Sent!
                   </h3>
                   <p className="text-[#8D6E63]" style={{ fontFamily: "Lora, serif" }}>
-                    Thanks for reaching out. Todd will reply within 1–2 business days.
+                    Thanks for reaching out. Todd will reply {SITE_CONFIG.responseTime}.
                   </p>
                   <button
                     onClick={() => { setSubmitted(false); setForm({ name: "", email: "", subject: "general", message: "" }); }}

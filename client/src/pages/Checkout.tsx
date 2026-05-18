@@ -1,9 +1,10 @@
 import { useCart } from "@/contexts/CartContext";
 import { trpc } from "@/lib/trpc";
 import { useState } from "react";
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { ArrowLeft, Lock, ShoppingBag, Check } from "lucide-react";
 import { toast } from "sonner";
+import { SITE_CONFIG } from "@shared/storefront";
 
 type Step = "info" | "shipping" | "review";
 
@@ -32,9 +33,9 @@ const US_STATES = [
 
 export default function Checkout() {
   const { items, subtotal, clearCart } = useCart();
-  const [, navigate] = useLocation();
   const [step, setStep] = useState<Step>("info");
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
+  const venmoHandle = SITE_CONFIG.venmoHandle.trim().replace(/^@/, "");
 
   const [customer, setCustomer] = useState<CustomerInfo>({
     firstName: "", lastName: "", email: "", phone: "",
@@ -46,7 +47,7 @@ export default function Checkout() {
   const formatPrice = (cents: number) =>
     new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
 
-  const shippingCost = subtotal >= 7500 ? 0 : 895; // free over $75
+  const shippingCost = subtotal >= SITE_CONFIG.freeShippingThresholdCents ? 0 : 895;
   const total = subtotal + shippingCost;
 
   const placeOrder = trpc.orders.create.useMutation({
@@ -81,7 +82,9 @@ export default function Checkout() {
         productSlug: i.slug,
         imageUrl: i.imageUrl,
       })),
+      paymentMethod: "CHECK",
       shippingCost,
+      notes: "Preferred payment: Venmo",
     });
   };
 
@@ -113,10 +116,10 @@ export default function Checkout() {
             className="font-cinzel text-[#3E2723] text-3xl mb-3"
             style={{ fontFamily: "Cinzel, serif" }}
           >
-            Order Confirmed!
+            Order Received!
           </h1>
           <p className="text-[#5D4037] mb-2" style={{ fontFamily: "Lora, serif" }}>
-            Thank you for your order. Todd will begin work on your pieces shortly.
+            Thank you for your order. Todd will review it and follow up with Venmo payment details {SITE_CONFIG.responseTime}.
           </p>
           <div className="bg-white border border-[#D7CCC8] rounded-lg p-6 my-6 text-left">
             <p className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-1" style={{ fontFamily: "Inter, sans-serif" }}>
@@ -126,11 +129,30 @@ export default function Checkout() {
               #{orderNumber}
             </p>
             <p className="text-sm text-[#8D6E63] mt-3" style={{ fontFamily: "Inter, sans-serif" }}>
-              A confirmation email will be sent to <strong>{customer.email}</strong>.
+              Order updates will go to <strong>{customer.email}</strong>.
             </p>
             <p className="text-sm text-[#8D6E63] mt-2" style={{ fontFamily: "Inter, sans-serif" }}>
-              Estimated shipping: 3–7 business days (made-to-order pieces: 2–4 weeks).
+              In-stock pieces usually ship in {SITE_CONFIG.inStockShippingWindow}. Made-to-order pieces typically ship in {SITE_CONFIG.madeToOrderLeadTime}.
             </p>
+            <div className="mt-4 rounded-lg bg-[#F5F0EB] border border-[#D7CCC8] p-4">
+              <p className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-2" style={{ fontFamily: "Inter, sans-serif" }}>
+                Next Steps
+              </p>
+              <ul className="space-y-2 text-sm text-[#5D4037]" style={{ fontFamily: "Lora, serif" }}>
+                <li>1. Todd reviews the order and confirms availability.</li>
+                <li>2. You receive Venmo payment instructions by email.</li>
+                <li>3. Your order moves into carving, finishing, or packing once payment is received.</li>
+              </ul>
+              {venmoHandle ? (
+                <p className="text-sm text-[#5D4037] mt-3" style={{ fontFamily: "Inter, sans-serif" }}>
+                  Venmo handle: <strong>@{venmoHandle}</strong>
+                </p>
+              ) : (
+                <p className="text-sm text-[#5D4037] mt-3" style={{ fontFamily: "Inter, sans-serif" }}>
+                  Venmo details will be included in Todd&apos;s reply.
+                </p>
+              )}
+            </div>
           </div>
           <Link
             href="/shop"
@@ -151,12 +173,12 @@ export default function Checkout() {
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <span className="text-[#C9A227] font-cinzel text-lg font-semibold" style={{ fontFamily: "Cinzel, serif" }}>
-              Mr. Todd's Woodcrafts
+              {SITE_CONFIG.brandName}
             </span>
           </Link>
           <div className="flex items-center gap-1 text-[#8D6E63] text-xs" style={{ fontFamily: "Inter, sans-serif" }}>
             <Lock className="w-3.5 h-3.5" />
-            Secure Checkout
+            Venmo Checkout
           </div>
         </div>
       </div>
@@ -369,11 +391,16 @@ export default function Checkout() {
 
                 <div className="mt-6 p-4 bg-[#F5F0EB] rounded border border-[#D7CCC8] text-sm text-[#5D4037]" style={{ fontFamily: "Lora, serif" }}>
                   <p className="font-semibold text-[#3E2723] mb-1" style={{ fontFamily: "Cinzel, serif" }}>
-                    Note on Payment
+                    How payment works
                   </p>
                   <p>
-                    This site currently processes orders manually. After placing your order, Todd will contact you within 24 hours to arrange payment via Venmo, PayPal, or check.
+                    Place your order today and Todd will follow up {SITE_CONFIG.responseTime} to confirm availability and collect payment through Venmo.
                   </p>
+                  {venmoHandle ? (
+                    <p className="mt-2" style={{ fontFamily: "Inter, sans-serif" }}>
+                      Preferred Venmo: <strong>@{venmoHandle}</strong>
+                    </p>
+                  ) : null}
                 </div>
 
                 <button
@@ -388,7 +415,7 @@ export default function Checkout() {
                   className="mt-6 w-full py-3.5 bg-[#3E2723] text-[#D7CCC8] font-semibold text-sm tracking-widest uppercase rounded hover:bg-[#5D4037] transition-colors disabled:opacity-60"
                   style={{ fontFamily: "Inter, sans-serif" }}
                 >
-                  {placeOrder.isPending ? "Placing Order..." : "Place Order"}
+                  {placeOrder.isPending ? "Sending Order..." : "Place Venmo Order"}
                 </button>
               </div>
             )}
@@ -447,6 +474,9 @@ export default function Checkout() {
                   <span>Total</span>
                   <span>{formatPrice(total)}</span>
                 </div>
+                <p className="text-xs text-[#8D6E63]" style={{ fontFamily: "Inter, sans-serif" }}>
+                  Payment is requested after Todd confirms your order.
+                </p>
               </div>
             </div>
           </div>

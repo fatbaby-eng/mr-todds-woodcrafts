@@ -6,6 +6,7 @@ import { ArrowLeft, ShoppingBag, Clock, Check, ChevronLeft, ChevronRight, Star }
 import PublicLayout from "@/components/PublicLayout";
 import { toast } from "sonner";
 import ProductCard from "@/components/ProductCard";
+import { SITE_CONFIG } from "@shared/storefront";
 
 const WOOD_LABELS: Record<string, string> = {
   CHERRY: "Cherry", WALNUT: "Walnut", MAPLE: "Maple", MIXED: "Mixed Wood", OTHER: "Other",
@@ -262,6 +263,9 @@ export default function ProductDetail() {
                       </>
                     )}
                   </button>
+                  <p className="text-sm text-[#8D6E63]" style={{ fontFamily: "Lora, serif" }}>
+                    Checkout reserves this piece and Todd follows up with Venmo payment details.
+                  </p>
                 </div>
               ) : (
                 <div className="py-4 px-6 bg-[#D7CCC8] rounded text-center">
@@ -289,6 +293,9 @@ export default function ProductDetail() {
                   </div>
                 ))}
               </div>
+              <p className="mt-4 text-xs text-[#8D6E63]" style={{ fontFamily: "Inter, sans-serif" }}>
+                {SITE_CONFIG.acceptedPaymentLabel}. In-stock pieces usually ship in {SITE_CONFIG.inStockShippingWindow}.
+              </p>
             </div>
           </div>
 

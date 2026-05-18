@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import CartDrawer from "./CartDrawer";
 import { trpc } from "@/lib/trpc";
+import { SITE_CONFIG } from "@shared/storefront";
 
 const NAV_LINKS = [
   { href: "/", label: "Home" },
@@ -163,7 +164,10 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                 </span>
               </div>
               <p className="text-sm text-[#8D6E63] leading-relaxed" style={{ fontFamily: "Lora, serif" }}>
-                Hand-carved kitchen and home objects. Material-led, one of one. Made in Omaha, Nebraska.
+                Hand-carved kitchen and home objects. Material-led, one of one. Made in {SITE_CONFIG.location}.
+              </p>
+              <p className="text-xs text-[#C9A227] mt-3" style={{ fontFamily: "Inter, sans-serif" }}>
+                {SITE_CONFIG.acceptedPaymentLabel} for online orders
               </p>
             </div>
 
@@ -210,7 +214,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
               © {new Date().getFullYear()} Mr. Todd's Woodcrafts. All rights reserved.
             </p>
             <p className="text-xs text-[#5D4037]" style={{ fontFamily: "Inter, sans-serif" }}>
-              Handcrafted in Omaha, Nebraska
+              {SITE_CONFIG.domain} - handcrafted in {SITE_CONFIG.location}
             </p>
           </div>
         </div>

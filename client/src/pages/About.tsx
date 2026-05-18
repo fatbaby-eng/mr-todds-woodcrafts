@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { ArrowRight } from "lucide-react";
 import PublicLayout from "@/components/PublicLayout";
+import { SITE_CONFIG } from "@shared/storefront";
 
 const ABOUT_IMAGE = "https://d2xsxph8kpxj0f.cloudfront.net/310519663636425749/NnkxhKXWD7fvxT2jVUmqJK/about-workshop-mDbzEm83VeFf26wFs83pMw.webp";
 const PROCESS_IMAGE = "https://d2xsxph8kpxj0f.cloudfront.net/310519663636425749/NnkxhKXWD7fvxT2jVUmqJK/process-banner-NRWk3kcMe7ZBPpmt2FU9ag.webp";
@@ -80,22 +81,16 @@ export default function About() {
                   Hand tools mostly. Food-safe oil finishes. The grain decides as much as the maker does. No two pieces come out the same, and they aren't meant to be.
                 </p>
                 <p className="leading-relaxed text-[#8D6E63]">
-                  Run out of a workshop in Omaha, Nebraska, by Todd Boswell. Designer by trade, carver by accident.
+                  Run out of a workshop in {SITE_CONFIG.location}, by Todd Boswell. Designer by trade, carver by accident.
                 </p>
               </div>
             </div>
             <div className="relative">
-              {/* TODO: Replace ABOUT_IMAGE with a real photo of Todd's workshop. Current image is placeholder stock photography. */}
               <img
                 src={ABOUT_IMAGE}
-                alt="Todd's workshop — placeholder, needs real photo"
-                className="w-full rounded-lg shadow-xl object-cover aspect-[4/3] opacity-60"
+                alt="Inside Todd's woodworking shop"
+                className="w-full rounded-lg shadow-xl object-cover aspect-[4/3]"
               />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="bg-[#3E2723]/80 text-[#C9A227] text-xs tracking-widest uppercase px-4 py-2 rounded" style={{ fontFamily: "Inter, sans-serif" }}>
-                  Real workshop photo coming soon
-                </div>
-              </div>
               <div className="absolute -bottom-4 -left-4 bg-[#C9A227] text-[#3E2723] p-4 rounded shadow-lg hidden lg:block">
                 <p className="font-cinzel text-lg font-bold leading-tight" style={{ fontFamily: "Cinzel, serif" }}>Measured in</p>
                 <p className="font-cinzel text-lg font-bold leading-tight" style={{ fontFamily: "Cinzel, serif" }}>Grain and Grace</p>

@@ -3,6 +3,7 @@ import { useState, useMemo } from "react";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import PublicLayout from "@/components/PublicLayout";
+import { SITE_CONFIG } from "@shared/storefront";
 
 const CATEGORIES = ["All", "SPOON", "KNIFE", "SCOOP", "SERVING", "CUSTOM"];
 const WOOD_TYPES = ["All", "CHERRY", "WALNUT", "MAPLE", "MIXED", "OTHER"];
@@ -70,13 +71,22 @@ export default function Shop() {
             The Collection
           </h1>
           <p className="text-[#8D6E63] mt-4 max-w-lg mx-auto" style={{ fontFamily: "Lora, serif" }}>
-            Every piece carved by hand from sustainably sourced hardwoods. Browse the full collection below.
+            Every piece is carved by hand from sustainably sourced hardwoods. Place your order online and Todd will follow up with Venmo payment details.
           </p>
         </div>
       </div>
 
       <div className="bg-[#F5F0EB] min-h-screen py-10">
         <div className="container">
+          <div className="mb-6 rounded-lg border border-[#D7CCC8] bg-white p-4">
+            <p className="text-xs font-semibold tracking-[0.2em] uppercase text-[#C9A227] mb-1" style={{ fontFamily: "Inter, sans-serif" }}>
+              {SITE_CONFIG.acceptedPaymentLabel}
+            </p>
+            <p className="text-sm text-[#5D4037]" style={{ fontFamily: "Lora, serif" }}>
+              Checkout reserves the piece and captures your shipping details. Todd confirms each order personally before payment is collected.
+            </p>
+          </div>
+
           {/* Search + Filter bar */}
           <div className="flex flex-col sm:flex-row gap-3 mb-6">
             <div className="relative flex-1">

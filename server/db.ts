@@ -18,6 +18,12 @@ import {
   type InsertSubscriber,
   type InsertCartSession,
 } from "../drizzle/schema";
+import {
+  FALLBACK_PRODUCTS,
+  getFallbackProductById,
+  getFallbackProductBySlug,
+  getFallbackProducts,
+} from "../shared/storefront";
 import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -85,7 +91,7 @@ export async function getProducts(opts?: {
   offset?: number;
 }) {
   const db = await getDb();
-  if (!db) return [];
+  if (!db) return getFallbackProducts(opts);
   let query = db.select().from(products).$dynamic();
   const conditions = [];
   if (opts?.category) conditions.push(eq(products.category, opts.category as any));
@@ -111,14 +117,14 @@ export async function getProducts(opts?: {
 
 export async function getProductBySlug(slug: string) {
   const db = await getDb();
-  if (!db) return undefined;
+  if (!db) return getFallbackProductBySlug(slug);
   const result = await db.select().from(products).where(eq(products.slug, slug)).limit(1);
   return result[0];
 }
 
 export async function getProductById(id: number) {
   const db = await getDb();
-  if (!db) return undefined;
+  if (!db) return getFallbackProductById(id);
   const result = await db.select().from(products).where(eq(products.id, id)).limit(1);
   return result[0];
 }
@@ -286,7 +292,20 @@ export async function upsertCartSession(sessionId: string, items: InsertCartSess
 // ─── Analytics helpers ────────────────────────────────────────────────────────
 export async function getDashboardStats() {
   const db = await getDb();
-  if (!db) return { totalProducts: 0, totalOrders: 0, pendingOrders: 0, lowStockProducts: [], totalRevenue: 0 };
+  if (!db) {
+    return {
+      totalProducts: FALLBACK_PRODUCTS.length,
+      totalOrders: 0,
+      pendingOrders: 0,
+      lowStockProducts: FALLBACK_PRODUCTS.filter(
+        (product) =>
+          product.status === "IN_STOCK" &&
+          product.quantity > 0 &&
+          product.quantity <= 3,
+      ),
+      totalRevenue: 0,
+    };
+  }
 
   const [productCount] = await db.select({ count: sql<number>`COUNT(*)` }).from(products).where(sql`${products.status} != 'RETIRED'`);
   const [orderCount] = await db.select({ count: sql<number>`COUNT(*)` }).from(orders);

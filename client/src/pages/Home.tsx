@@ -3,12 +3,17 @@ import { Link } from "wouter";
 import { ArrowRight, ChevronDown, Truck } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import PublicLayout from "@/components/PublicLayout";
+import { SITE_CONFIG } from "@shared/storefront";
 
 const HERO_IMAGE = "https://d2xsxph8kpxj0f.cloudfront.net/310519663636425749/NnkxhKXWD7fvxT2jVUmqJK/hero-workshop-KY7LMQoA4LrMirx4g7bW3D.webp";
 const ABOUT_IMAGE = "https://d2xsxph8kpxj0f.cloudfront.net/310519663636425749/NnkxhKXWD7fvxT2jVUmqJK/about-workshop-mDbzEm83VeFf26wFs83pMw.webp";
 
 export default function Home() {
   const { data: featuredProducts, isLoading } = trpc.products.list.useQuery({ featured: true, limit: 6 });
+  const freeShippingThreshold = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(SITE_CONFIG.freeShippingThresholdCents / 100);
 
   return (
     <PublicLayout>
@@ -44,7 +49,7 @@ export default function Home() {
             className="text-[#D7CCC8] text-lg md:text-xl max-w-2xl mx-auto mb-3 leading-relaxed"
             style={{ fontFamily: "Lora, serif" }}
           >
-            Hand-carved kitchen and home objects shaped by the wood as much as the hand. Cherry, walnut, apricot, and other hardwoods. One of one.
+            Hand-carved kitchen and home objects shaped by the wood as much as the hand. Shop one-of-a-kind pieces online, then pay with Venmo after Todd confirms your order.
           </p>
           <p
             className="text-[#C9A227] text-sm tracking-[0.2em] uppercase mb-10"
@@ -68,6 +73,31 @@ export default function Home() {
             >
               Our Story
             </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto mt-12 text-left">
+            {[
+              {
+                title: SITE_CONFIG.acceptedPaymentLabel,
+                body: "Reserve your piece online and Todd follows up with payment details.",
+              },
+              {
+                title: `Free shipping over ${freeShippingThreshold}`,
+                body: "Orders are packed carefully in Omaha and ship across the U.S.",
+              },
+              {
+                title: "Custom work available",
+                body: "Need a serving board or a special gift? Reach out for a commission.",
+              },
+            ].map((item) => (
+              <div key={item.title} className="rounded-lg border border-white/10 bg-black/20 p-4 backdrop-blur-sm">
+                <p className="text-[#C9A227] text-xs tracking-[0.2em] uppercase mb-2" style={{ fontFamily: "Inter, sans-serif" }}>
+                  {item.title}
+                </p>
+                <p className="text-[#D7CCC8] text-sm leading-relaxed" style={{ fontFamily: "Lora, serif" }}>
+                  {item.body}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -133,6 +163,53 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="py-16 bg-white border-y border-[#E6DDD5]">
+        <div className="container">
+          <div className="text-center max-w-2xl mx-auto mb-10">
+            <p className="text-[#C9A227] text-xs tracking-[0.3em] uppercase mb-3" style={{ fontFamily: "Inter, sans-serif" }}>
+              How Ordering Works
+            </p>
+            <h2 className="text-[#3E2723] text-3xl md:text-4xl font-cinzel mb-4" style={{ fontFamily: "Cinzel, serif" }}>
+              Simple, personal, and ready to sell today
+            </h2>
+            <p className="text-[#5D4037]" style={{ fontFamily: "Lora, serif" }}>
+              The site takes the order, Todd confirms the details, and Venmo keeps payment simple while the shop gets online.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                step: "01",
+                title: "Choose your piece",
+                body: "Browse available spoons, scoops, boards, and one-off carvings from the current collection.",
+              },
+              {
+                step: "02",
+                title: "Place your order",
+                body: "Checkout captures your contact and shipping info so Todd can reserve the piece for you.",
+              },
+              {
+                step: "03",
+                title: "Pay with Venmo",
+                body: "Todd follows up within 24 hours with payment details and confirms the shipping timeline.",
+              },
+            ].map((item) => (
+              <div key={item.step} className="rounded-lg border border-[#D7CCC8] bg-[#F5F0EB] p-6">
+                <p className="text-[#C9A227] text-xs tracking-[0.3em] uppercase mb-3" style={{ fontFamily: "Inter, sans-serif" }}>
+                  Step {item.step}
+                </p>
+                <h3 className="text-[#3E2723] text-xl font-cinzel mb-3" style={{ fontFamily: "Cinzel, serif" }}>
+                  {item.title}
+                </h3>
+                <p className="text-[#5D4037]" style={{ fontFamily: "Lora, serif" }}>
+                  {item.body}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ─── Brand Story ─────────────────────────────────────────────────── */}
       <section className="py-20 bg-[#3E2723]">
         <div className="container">
@@ -193,10 +270,10 @@ export default function Home() {
             className="text-[#3E2723] text-2xl md:text-3xl font-cinzel mb-4"
             style={{ fontFamily: "Cinzel, serif" }}
           >
-            Free Shipping on Orders Over $75
+            Free Shipping on Orders Over {freeShippingThreshold}
           </h2>
           <p className="text-[#5D4037] mb-8 max-w-md mx-auto" style={{ fontFamily: "Lora, serif" }}>
-            Every order ships carefully packaged from Omaha, Nebraska. Made-to-order pieces ship within 2 weeks.
+            Every order ships carefully packaged from {SITE_CONFIG.location}. Made-to-order pieces typically ship in {SITE_CONFIG.madeToOrderLeadTime}.
           </p>
           <Link
             href="/shop"

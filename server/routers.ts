@@ -16,6 +16,7 @@ import {
   deleteTradeShow,
   deleteWoodBlank,
   getDashboardStats,
+  getDb,
   getOrderById,
   getOrderByNumber,
   getOrderItems,
@@ -34,6 +35,7 @@ import {
   updateWoodBlank,
 } from "./db";
 import { storagePut } from "./storage";
+import { SITE_CONFIG } from "../shared/storefront";
 
 // ─── Admin guard ──────────────────────────────────────────────────────────────
 const adminProcedure = protectedProcedure.use(({ ctx, next }) => {
@@ -222,7 +224,7 @@ export const appRouter = router({
           zip: z.string(),
           country: z.string(),
         }),
-        paymentMethod: z.enum(["STRIPE", "PAYPAL", "CASH", "CHECK"]).default("STRIPE"),
+        paymentMethod: z.enum(["STRIPE", "PAYPAL", "CASH", "CHECK"]).default("CHECK"),
         items: z.array(z.object({
           productId: z.number().optional(),
           productName: z.string(),
@@ -240,53 +242,122 @@ export const appRouter = router({
         const subtotal = input.items.reduce((sum, i) => sum + i.price * i.quantity, 0);
         const totalAmount = subtotal + input.shippingCost + input.taxAmount;
         const orderNumber = `MTW-${new Date().getFullYear()}-${String(Date.now()).slice(-6)}`;
+        const orderNotes = [
+          "Preferred payment: Venmo",
+          SITE_CONFIG.venmoHandle
+            ? `Venmo handle: @${SITE_CONFIG.venmoHandle.replace(/^@/, "")}`
+            : SITE_CONFIG.venmoInstructions,
+          input.notes,
+        ]
+          .filter((note): note is string => Boolean(note?.trim()))
+          .join("\n");
 
-        await createOrder({
-          orderNumber,
-          customerEmail: input.customerEmail,
-          customerName: input.customerName,
-          customerPhone: input.customerPhone,
-          shippingAddress: input.shippingAddress,
-          paymentMethod: input.paymentMethod,
-          totalAmount,
-          shippingCost: input.shippingCost,
-          taxAmount: input.taxAmount,
-          notes: input.notes,
-          status: "PENDING",
-          paymentStatus: "PENDING",
-        });
+        let orderId: number | null = null;
+        let persistedOrder = false;
 
-        const order = await getOrderByNumber(orderNumber);
-        if (!order) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        if (await getDb()) {
+          try {
+            await createOrder({
+              orderNumber,
+              customerEmail: input.customerEmail,
+              customerName: input.customerName,
+              customerPhone: input.customerPhone,
+              shippingAddress: input.shippingAddress,
+              paymentMethod: input.paymentMethod,
+              totalAmount,
+              shippingCost: input.shippingCost,
+              taxAmount: input.taxAmount,
+              notes: orderNotes,
+              status: "PENDING",
+              paymentStatus: "PENDING",
+            });
 
-        await createOrderItems(
-          input.items.map((item) => ({
-            orderId: order.id,
-            productId: item.productId,
-            productName: item.productName,
-            productSlug: item.productSlug,
-            price: item.price,
-            quantity: item.quantity,
-            woodType: item.woodType,
-            imageUrl: item.imageUrl,
-          }))
-        );
+            const order = await getOrderByNumber(orderNumber);
+            if (!order) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
 
-        // Decrement stock for in-stock products
-        for (const item of input.items) {
-          if (item.productId) {
-            const product = await getProductById(item.productId);
-            if (product && product.status === "IN_STOCK") {
-              const newQty = Math.max(0, product.quantity - item.quantity);
-              await updateProduct(item.productId, {
-                quantity: newQty,
-                status: newQty === 0 ? "SOLD_OUT" : "IN_STOCK",
-              });
+            orderId = order.id;
+            persistedOrder = true;
+
+            await createOrderItems(
+              input.items.map((item) => ({
+                orderId: order.id,
+                productId: item.productId,
+                productName: item.productName,
+                productSlug: item.productSlug,
+                price: item.price,
+                quantity: item.quantity,
+                woodType: item.woodType,
+                imageUrl: item.imageUrl,
+              }))
+            );
+
+            // Keep inventory accurate for live orders when a database is available.
+            for (const item of input.items) {
+              if (!item.productId) continue;
+
+              const product = await getProductById(item.productId);
+              if (product && product.status === "IN_STOCK") {
+                const newQty = Math.max(0, product.quantity - item.quantity);
+                await updateProduct(item.productId, {
+                  quantity: newQty,
+                  status: newQty === 0 ? "SOLD_OUT" : "IN_STOCK",
+                });
+              }
             }
+          } catch (error) {
+            console.warn("[Orders] Failed to persist order, falling back to notification only.", error);
           }
         }
 
-        return { orderNumber, orderId: order.id };
+        const shippingLines = [
+          input.shippingAddress.line1,
+          input.shippingAddress.line2,
+          `${input.shippingAddress.city}, ${input.shippingAddress.state} ${input.shippingAddress.zip}`,
+          input.shippingAddress.country,
+        ].filter(Boolean);
+
+        let ownerNotified = false;
+        try {
+          ownerNotified = await notifyOwner({
+            title: `New woodcraft order ${orderNumber} from ${input.customerName}`,
+            content: [
+              `Order number: ${orderNumber}`,
+              `Customer: ${input.customerName}`,
+              `Email: ${input.customerEmail}`,
+              input.customerPhone ? `Phone: ${input.customerPhone}` : undefined,
+              "",
+              "Items:",
+              ...input.items.map(
+                (item) =>
+                  `- ${item.quantity} x ${item.productName} (${item.productSlug ?? "custom"}) @ $${(item.price / 100).toFixed(2)}`
+              ),
+              "",
+              `Subtotal: $${(subtotal / 100).toFixed(2)}`,
+              `Shipping: $${(input.shippingCost / 100).toFixed(2)}`,
+              `Tax: $${(input.taxAmount / 100).toFixed(2)}`,
+              `Total: $${(totalAmount / 100).toFixed(2)}`,
+              "",
+              "Shipping address:",
+              ...shippingLines,
+              "",
+              "Payment:",
+              orderNotes,
+            ]
+              .filter(Boolean)
+              .join("\n"),
+          });
+        } catch (error) {
+          console.warn("[Orders] Failed to notify owner about new order.", error);
+        }
+
+        if (!persistedOrder && !ownerNotified) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Order could not be recorded. Please contact Todd directly before retrying.",
+          });
+        }
+
+        return { orderNumber, orderId };
       }),
   }),
 
@@ -393,7 +464,11 @@ export const appRouter = router({
         source: z.enum(["WEBSITE", "TRADE_SHOW", "INSTAGRAM"]).optional(),
       }))
       .mutation(async ({ input }) => {
-        await addSubscriber({ email: input.email, source: input.source ?? "WEBSITE" });
+        try {
+          await addSubscriber({ email: input.email, source: input.source ?? "WEBSITE" });
+        } catch (error) {
+          console.warn("[Subscribers] Could not save subscriber.", error);
+        }
         return { success: true };
       }),
 
