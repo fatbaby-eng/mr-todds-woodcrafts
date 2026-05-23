@@ -212,6 +212,9 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
             <p className="text-xs text-[#5D4037]" style={{ fontFamily: "Inter, sans-serif" }}>
               Handcrafted in Omaha, Nebraska
             </p>
+            <p className="text-xs text-[#5D4037]" style={{ fontFamily: "Inter, sans-serif" }}>
+              Need a shop like this? <a href="https://www.toddboswell.com" target="_blank" rel="noopener noreferrer" className="text-[#8D6E63] hover:text-[#C9A227] transition-colors underline decoration-[#5D4037] hover:decoration-[#C9A227] underline-offset-2">toddboswell.com</a>
+            </p>
           </div>
         </div>
       </footer>
