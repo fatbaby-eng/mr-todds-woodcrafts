@@ -60,7 +60,8 @@ One of a kind.`,
     quantity: 1,
     featured: true,
     images: JSON.stringify([
-      "/images/products/real-cherry-wave.jpg"
+      "/images/products/real-cherry-wave.jpg",
+      "/images/products/real-wave-spoon-2.jpg"
     ]),
   },
   {
@@ -80,7 +81,24 @@ Finished with food-safe mineral oil. Approximately 10 × 7 inches, 2 inches tall
     quantity: 1,
     featured: true,
     images: JSON.stringify([
-      "/images/products/real-cherry-bowl.jpg"
+      "/images/products/real-cherry-bowl.jpg",
+      "/images/products/real-cherry-bowl-2.jpg"
+    ]),
+  },
+  {
+    name: "Apricot Bracelet",
+    slug: "apricot-bracelet",
+    description: `A unique handcrafted wooden bracelet made from beautiful wood with natural rustic edges. Smoothly finished to comfortably wear on your wrist.`,
+    price: 4500,
+    category: "CUSTOM",
+    woodType: "CHERRY",
+    dimensions: "One Size",
+    quantity: 1,
+    featured: false,
+    images: JSON.stringify([
+      "/images/products/real-apricot-bracelet-1.jpg",
+      "/images/products/real-apricot-bracelet-2.jpg",
+      "/images/products/real-apricot-bracelet-3.jpg"
     ]),
   },
 ];
