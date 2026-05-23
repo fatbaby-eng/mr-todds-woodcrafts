@@ -105,11 +105,12 @@ export const appRouter = router({
         slug: z.string().min(1),
         description: z.string().optional(),
         price: z.number().int().min(0),
-        woodType: z.enum(["CHERRY", "WALNUT", "MAPLE", "MIXED", "OTHER"]),
+        woodType: z.enum(["CHERRY", "WALNUT", "MAPLE", "APRICOT", "MIXED", "OTHER"]),
         category: z.enum(["SPOON", "KNIFE", "SCOOP", "SERVING", "CUSTOM"]),
         status: z.enum(["IN_STOCK", "MADE_TO_ORDER", "SOLD_OUT", "RETIRED"]),
         quantity: z.number().int().min(0),
         leadTimeDays: z.number().int().optional(),
+        allowsCustomWood: z.boolean().optional(),
         featured: z.boolean().optional(),
         images: z.array(z.string()),
         dimensions: z.string().optional(),
@@ -128,11 +129,12 @@ export const appRouter = router({
         slug: z.string().optional(),
         description: z.string().optional(),
         price: z.number().int().min(0).optional(),
-        woodType: z.enum(["CHERRY", "WALNUT", "MAPLE", "MIXED", "OTHER"]).optional(),
+        woodType: z.enum(["CHERRY", "WALNUT", "MAPLE", "APRICOT", "MIXED", "OTHER"]).optional(),
         category: z.enum(["SPOON", "KNIFE", "SCOOP", "SERVING", "CUSTOM"]).optional(),
         status: z.enum(["IN_STOCK", "MADE_TO_ORDER", "SOLD_OUT", "RETIRED"]).optional(),
         quantity: z.number().int().min(0).optional(),
         leadTimeDays: z.number().int().optional(),
+        allowsCustomWood: z.boolean().optional(),
         featured: z.boolean().optional(),
         images: z.array(z.string()).optional(),
         dimensions: z.string().optional(),
@@ -299,7 +301,7 @@ export const appRouter = router({
 
     create: adminProcedure
       .input(z.object({
-        woodType: z.enum(["CHERRY", "WALNUT", "MAPLE", "MIXED", "OTHER"]),
+        woodType: z.enum(["CHERRY", "WALNUT", "MAPLE", "APRICOT", "MIXED", "OTHER"]),
         dimensions: z.string().optional(),
         source: z.string().optional(),
         acquiredDate: z.date().optional(),
@@ -316,7 +318,7 @@ export const appRouter = router({
     update: adminProcedure
       .input(z.object({
         id: z.number(),
-        woodType: z.enum(["CHERRY", "WALNUT", "MAPLE", "MIXED", "OTHER"]).optional(),
+        woodType: z.enum(["CHERRY", "WALNUT", "MAPLE", "APRICOT", "MIXED", "OTHER"]).optional(),
         dimensions: z.string().optional(),
         source: z.string().optional(),
         cost: z.number().int().optional(),

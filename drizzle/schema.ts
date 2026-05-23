@@ -33,11 +33,12 @@ export const products = mysqlTable("products", {
   slug: varchar("slug", { length: 255 }).notNull().unique(),
   description: text("description"),
   price: int("price").notNull(), // in cents
-  woodType: mysqlEnum("woodType", ["CHERRY", "WALNUT", "MAPLE", "MIXED", "OTHER"]).notNull().default("MIXED"),
+  woodType: mysqlEnum("woodType", ["CHERRY", "WALNUT", "MAPLE", "APRICOT", "MIXED", "OTHER"]).notNull().default("MIXED"),
   category: mysqlEnum("category", ["SPOON", "KNIFE", "SCOOP", "SERVING", "CUSTOM"]).notNull().default("SPOON"),
   status: mysqlEnum("status", ["IN_STOCK", "MADE_TO_ORDER", "SOLD_OUT", "RETIRED"]).notNull().default("IN_STOCK"),
   quantity: int("quantity").notNull().default(0),
   leadTimeDays: int("leadTimeDays"),
+  allowsCustomWood: boolean("allowsCustomWood").notNull().default(false),
   featured: boolean("featured").notNull().default(false),
   images: json("images").$type<string[]>().notNull(),
   dimensions: varchar("dimensions", { length: 100 }),
@@ -99,7 +100,7 @@ export type InsertOrderItem = typeof orderItems.$inferInsert;
 // ─── Wood Blanks (Inventory) ──────────────────────────────────────────────────
 export const woodBlanks = mysqlTable("wood_blanks", {
   id: int("id").autoincrement().primaryKey(),
-  woodType: mysqlEnum("woodType", ["CHERRY", "WALNUT", "MAPLE", "MIXED", "OTHER"]).notNull(),
+  woodType: mysqlEnum("woodType", ["CHERRY", "WALNUT", "MAPLE", "APRICOT", "MIXED", "OTHER"]).notNull(),
   dimensions: varchar("dimensions", { length: 100 }),
   source: varchar("source", { length: 255 }),
   acquiredDate: timestamp("acquiredDate"),

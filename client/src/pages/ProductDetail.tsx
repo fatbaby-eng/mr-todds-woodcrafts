@@ -14,6 +14,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   SPOON: "Spoon", KNIFE: "Knife / Spreader", SCOOP: "Scoop",
   SERVING: "Serving Board", CUSTOM: "Custom Piece",
 };
+const CUSTOM_WOOD_OPTIONS = ["CHERRY", "WALNUT", "APRICOT", "MAPLE", "MIXED"];
 
 export default function ProductDetail() {
   const { slug } = useParams<{ slug: string }>();
@@ -21,6 +22,7 @@ export default function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
   const [added, setAdded] = useState(false);
+  const [selectedWood, setSelectedWood] = useState<string | null>(null);
 
   const { data: product, isLoading } = trpc.products.bySlug.useQuery({ slug: slug ?? "" });
   const { data: related } = trpc.products.list.useQuery(
@@ -40,7 +42,7 @@ export default function ProductDetail() {
       price: product.price,
       name: product.name,
       imageUrl: images[0],
-      woodType: product.woodType,
+      woodType: selectedWood || product.woodType,
       slug: product.slug,
     });
     setAdded(true);
@@ -163,7 +165,7 @@ export default function ProductDetail() {
                 </span>
                 <span className="text-[#D7CCC8]">·</span>
                 <span className="text-xs text-[#8D6E63]" style={{ fontFamily: "Inter, sans-serif" }}>
-                  {WOOD_LABELS[product.woodType] ?? product.woodType} Wood
+                  {product.allowsCustomWood ? "Custom Wood Selection" : `${WOOD_LABELS[product.woodType] ?? product.woodType} Wood`}
                 </span>
               </div>
 
@@ -191,11 +193,11 @@ export default function ProductDetail() {
 
               {/* Description */}
               {product.description && (
-                <div className="prose prose-sm max-w-none mb-6">
-                  <p className="text-[#5D4037] leading-relaxed" style={{ fontFamily: "Lora, serif" }}>
-                    {product.description}
-                  </p>
-                </div>
+                <div 
+                  className="prose prose-sm max-w-none mb-6 text-[#5D4037] prose-p:leading-relaxed prose-p:mb-4 prose-strong:font-semibold prose-strong:text-[#3E2723]" 
+                  style={{ fontFamily: "Lora, serif" }}
+                  dangerouslySetInnerHTML={{ __html: product.description.replace(/\n/g, "<br/>") }}
+                />
               )}
 
               {/* Dimensions */}
@@ -212,7 +214,36 @@ export default function ProductDetail() {
 
               {/* Quantity + Add to cart */}
               {canBuy ? (
-                <div className="space-y-4">
+                <div className="space-y-6">
+                  {/* Custom Wood Selection */}
+                  {product.allowsCustomWood && (
+                    <div className="space-y-3 p-4 bg-white border border-[#D7CCC8] rounded shadow-sm">
+                      <label className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] flex justify-between items-center" style={{ fontFamily: "Inter, sans-serif" }}>
+                        Select Wood Type
+                        <span className="text-[#C9A227] normal-case tracking-normal">Required</span>
+                      </label>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {CUSTOM_WOOD_OPTIONS.map((wood) => (
+                          <button
+                            key={wood}
+                            onClick={() => setSelectedWood(wood)}
+                            className={`py-2 px-3 text-sm rounded border transition-colors ${
+                              selectedWood === wood 
+                                ? "bg-[#3E2723] border-[#3E2723] text-white" 
+                                : "bg-[#F5F0EB] border-[#D7CCC8] text-[#5D4037] hover:border-[#3E2723]"
+                            }`}
+                            style={{ fontFamily: "Inter, sans-serif" }}
+                          >
+                            {WOOD_LABELS[wood]}
+                          </button>
+                        ))}
+                      </div>
+                      <p className="text-xs text-[#8D6E63] italic" style={{ fontFamily: "Inter, sans-serif" }}>
+                        Custom sets typically take 1-2 weeks.
+                      </p>
+                    </div>
+                  )}
+
                   <div className="flex items-center gap-4">
                     <label className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63]" style={{ fontFamily: "Inter, sans-serif" }}>
                       Qty
@@ -243,9 +274,12 @@ export default function ProductDetail() {
 
                   <button
                     onClick={handleAddToCart}
+                    disabled={product.allowsCustomWood && !selectedWood}
                     className={`w-full py-4 flex items-center justify-center gap-2 text-sm font-semibold tracking-widest uppercase rounded transition-all duration-200 ${
                       added
                         ? "bg-emerald-600 text-white"
+                        : product.allowsCustomWood && !selectedWood
+                        ? "bg-[#D7CCC8] text-[#8D6E63] cursor-not-allowed"
                         : "bg-[#3E2723] text-[#D7CCC8] hover:bg-[#5D4037]"
                     }`}
                     style={{ fontFamily: "Inter, sans-serif" }}
@@ -258,7 +292,7 @@ export default function ProductDetail() {
                     ) : (
                       <>
                         <ShoppingBag className="w-4 h-4" strokeWidth={1.5} />
-                        Add to Cart
+                        {product.allowsCustomWood && !selectedWood ? "Select Wood Type" : "Add to Cart"}
                       </>
                     )}
                   </button>
@@ -278,7 +312,7 @@ export default function ProductDetail() {
               <div className="mt-8 pt-6 border-t border-[#D7CCC8] grid grid-cols-3 gap-4 text-center">
                 {[
                   { icon: "✦", label: "Hand Carved" },
-                  { icon: "🌲", label: "Sustainably Sourced" },
+                  { icon: "🌳", label: "Local Hardwood" },
                   { icon: "🛡️", label: "Food Safe Finish" },
                 ].map((b) => (
                   <div key={b.label}>

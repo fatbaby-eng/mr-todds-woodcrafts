@@ -4,8 +4,8 @@ import { Plus, Pencil, Trash2, X, Upload, Star, StarOff, Loader2, ArrowLeft, Arr
 import AdminLayout from "./AdminLayout";
 import { toast } from "sonner";
 
-const WOOD_TYPES = ["CHERRY", "WALNUT", "MAPLE", "MIXED", "OTHER"] as const;
 const CATEGORIES = ["SPOON", "KNIFE", "SCOOP", "SERVING", "CUSTOM"] as const;
+const WOOD_TYPES = ["CHERRY", "WALNUT", "MAPLE", "APRICOT", "MIXED", "OTHER"] as const;
 const STATUSES = ["IN_STOCK", "MADE_TO_ORDER", "SOLD_OUT", "RETIRED"] as const;
 const formatPrice = (cents: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
@@ -14,13 +14,13 @@ type ProductForm = {
   name: string; slug: string; description: string; price: string;
   woodType: typeof WOOD_TYPES[number]; category: typeof CATEGORIES[number];
   status: typeof STATUSES[number]; quantity: string; leadTimeDays: string;
-  featured: boolean; images: string; dimensions: string; careInstructions: string;
+  featured: boolean; allowsCustomWood: boolean; images: string; dimensions: string; careInstructions: string;
 };
 
 const defaultForm: ProductForm = {
   name: "", slug: "", description: "", price: "", woodType: "CHERRY",
   category: "SPOON", status: "IN_STOCK", quantity: "1", leadTimeDays: "",
-  featured: false, images: "", dimensions: "", careInstructions: "",
+  featured: false, allowsCustomWood: false, images: "", dimensions: "", careInstructions: "",
 };
 
 function slugify(s: string) {
@@ -85,7 +85,7 @@ export default function AdminProducts() {
       name: p.name, slug: p.slug, description: p.description ?? "",
       price: (p.price / 100).toFixed(2), woodType: p.woodType, category: p.category,
       status: p.status, quantity: String(p.quantity), leadTimeDays: p.leadTimeDays ? String(p.leadTimeDays) : "",
-      featured: p.featured, images: imgs.join("\n"), dimensions: p.dimensions ?? "",
+      featured: p.featured, allowsCustomWood: p.allowsCustomWood ?? false, images: imgs.join("\n"), dimensions: p.dimensions ?? "",
       careInstructions: p.careInstructions ?? "",
     });
     setEditId(p.id);
@@ -119,6 +119,7 @@ export default function AdminProducts() {
       quantity: parseInt(form.quantity) || 0,
       leadTimeDays: form.leadTimeDays ? parseInt(form.leadTimeDays) : undefined,
       featured: form.featured,
+      allowsCustomWood: form.allowsCustomWood,
       images: form.images.split("\n").map((s) => s.trim()).filter(Boolean),
       dimensions: form.dimensions || undefined,
       careInstructions: form.careInstructions || undefined,
@@ -251,9 +252,9 @@ export default function AdminProducts() {
               </div>
               <Field label="Description">
                 <textarea
-                  rows={3} value={form.description}
+                  rows={10} value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  className={`${inputCls} resize-none`} style={{ fontFamily: "Inter, sans-serif" }}
+                  className={`${inputCls} resize-none font-mono`} style={{ fontFamily: "Inter, sans-serif" }}
                 />
               </Field>
               <div className="grid grid-cols-2 gap-4">
