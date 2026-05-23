@@ -1,6 +1,6 @@
 import { trpc } from "@/lib/trpc";
 import { useState, useRef } from "react";
-import { Plus, Pencil, Trash2, X, Upload, Star, StarOff, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, X, Upload, Star, StarOff, Loader2, ArrowLeft, ArrowRight } from "lucide-react";
 import AdminLayout from "./AdminLayout";
 import { toast } from "sonner";
 
@@ -26,6 +26,15 @@ const defaultForm: ProductForm = {
 function slugify(s: string) {
   return s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
+
+const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
+  <div>
+    <label className="block text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-1.5" style={{ fontFamily: "Inter, sans-serif" }}>
+      {label}
+    </label>
+    {children}
+  </div>
+);
 
 export default function AdminProducts() {
   const utils = trpc.useUtils();
@@ -83,6 +92,23 @@ export default function AdminProducts() {
     setModal("edit");
   };
 
+  const imagesList = form.images.split("\n").map(s => s.trim()).filter(Boolean);
+
+  const moveImage = (index: number, direction: 'left' | 'right') => {
+    const newImages = [...imagesList];
+    if (direction === 'left' && index > 0) {
+      [newImages[index - 1], newImages[index]] = [newImages[index], newImages[index - 1]];
+    } else if (direction === 'right' && index < newImages.length - 1) {
+      [newImages[index], newImages[index + 1]] = [newImages[index + 1], newImages[index]];
+    }
+    setForm({ ...form, images: newImages.join("\n") });
+  };
+
+  const removeImage = (index: number) => {
+    const newImages = imagesList.filter((_, i) => i !== index);
+    setForm({ ...form, images: newImages.join("\n") });
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const payload = {
@@ -100,15 +126,6 @@ export default function AdminProducts() {
     if (modal === "create") createProduct.mutate(payload);
     else if (modal === "edit" && editId) updateProduct.mutate({ id: editId, ...payload });
   };
-
-  const Field = ({ label, children }: { label: string; children: React.ReactNode }) => (
-    <div>
-      <label className="block text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-1.5" style={{ fontFamily: "Inter, sans-serif" }}>
-        {label}
-      </label>
-      {children}
-    </div>
-  );
 
   const inputCls = "w-full px-3 py-2 bg-[#0F0A05] border border-[#2D1A0E] rounded text-sm text-[#F5F0EB] placeholder-[#5D4037] focus:outline-none focus:border-[#C9A227]";
 
@@ -294,7 +311,7 @@ export default function AdminProducts() {
                 </Field>
               </div>
               <Field label="Images">
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <div className="flex items-center gap-2">
                     <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
                     <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading}
@@ -302,11 +319,34 @@ export default function AdminProducts() {
                       {uploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
                       {uploading ? "Uploading…" : "Upload Image"}
                     </button>
-                    <span className="text-xs text-[#5D4037]">or paste URLs below (one per line)</span>
                   </div>
-                  <textarea rows={3} value={form.images} onChange={(e) => setForm({ ...form, images: e.target.value })}
-                    placeholder="/manus-storage/... (one URL per line)"
-                    className={`${inputCls} resize-none font-mono text-xs`} />
+                  {imagesList.length > 0 && (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {imagesList.map((img, i) => (
+                        <div key={i} className="relative group rounded border border-[#2D1A0E] overflow-hidden bg-[#0F0A05]">
+                          <img src={img} alt="" className="w-full h-24 object-cover" />
+                          <div className="absolute top-1 right-1 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button type="button" onClick={() => removeImage(i)} className="bg-red-900/80 text-red-100 p-1 rounded hover:bg-red-600 flex items-center justify-center">
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                          <div className="absolute bottom-1 left-1 right-1 flex justify-between opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button type="button" onClick={() => moveImage(i, 'left')} disabled={i === 0} className="bg-black/70 text-white p-1 rounded disabled:opacity-30 hover:bg-black flex items-center justify-center">
+                              <ArrowLeft className="w-3 h-3" />
+                            </button>
+                            <button type="button" onClick={() => moveImage(i, 'right')} disabled={i === imagesList.length - 1} className="bg-black/70 text-white p-1 rounded disabled:opacity-30 hover:bg-black flex items-center justify-center">
+                              <ArrowRight className="w-3 h-3" />
+                            </button>
+                          </div>
+                          {i === 0 && (
+                            <div className="absolute top-1 left-1 bg-[#C9A227] text-[#1A1008] text-[10px] font-bold px-1.5 py-0.5 rounded">
+                              MAIN
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </Field>
               <Field label="Care Instructions">

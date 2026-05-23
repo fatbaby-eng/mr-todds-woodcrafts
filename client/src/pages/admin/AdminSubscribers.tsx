@@ -1,9 +1,22 @@
 import { trpc } from "@/lib/trpc";
-import { Users, Mail } from "lucide-react";
+import { Users, Mail, Trash2 } from "lucide-react";
 import AdminLayout from "./AdminLayout";
+import { useState } from "react";
+import { toast } from "sonner";
 
 export default function AdminSubscribers() {
+  const utils = trpc.useUtils();
   const { data: subscribers, isLoading } = trpc.subscribers.list.useQuery();
+  const [deleteConfirm, setDeleteConfirm] = useState<number | null>(null);
+
+  const deleteSub = trpc.subscribers.delete.useMutation({
+    onSuccess: () => {
+      utils.subscribers.list.invalidate();
+      setDeleteConfirm(null);
+      toast.success("Subscriber deleted.");
+    },
+    onError: () => toast.error("Failed to delete subscriber."),
+  });
 
   return (
     <AdminLayout>
@@ -31,7 +44,7 @@ export default function AdminSubscribers() {
               <table className="w-full text-sm" style={{ fontFamily: "Inter, sans-serif" }}>
                 <thead>
                   <tr className="border-b border-[#2D1A0E]">
-                    {["Email", "Source", "Subscribed"].map((h) => (
+                    {["Email", "Source", "Subscribed", ""].map((h) => (
                       <th key={h} className="px-4 py-3 text-left text-xs font-semibold tracking-widest uppercase text-[#8D6E63]">{h}</th>
                     ))}
                   </tr>
@@ -48,6 +61,13 @@ export default function AdminSubscribers() {
                       <td className="px-4 py-3 text-[#8D6E63]">
                         {new Date(sub.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
                       </td>
+                      <td className="px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => setDeleteConfirm(sub.id)} className="text-[#8D6E63] hover:text-red-400 transition-colors">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -56,6 +76,38 @@ export default function AdminSubscribers() {
           )}
         </div>
       </div>
+
+      {/* Delete Confirm */}
+      {deleteConfirm !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
+          <div className="bg-[#1A1008] border border-red-900/50 rounded-lg p-6 max-w-sm w-full text-center">
+            <Trash2 className="w-10 h-10 text-red-400 mx-auto mb-3" strokeWidth={1} />
+            <h3 className="font-cinzel text-[#F5F0EB] text-lg mb-2" style={{ fontFamily: "Cinzel, serif" }}>
+              Delete Subscriber?
+            </h3>
+            <p className="text-sm text-[#8D6E63] mb-5" style={{ fontFamily: "Inter, sans-serif" }}>
+              This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteConfirm(null)}
+                className="flex-1 py-2.5 border border-[#2D1A0E] text-[#8D6E63] text-sm rounded hover:border-[#5D4037] transition-colors"
+                style={{ fontFamily: "Inter, sans-serif" }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => deleteSub.mutate({ id: deleteConfirm })}
+                disabled={deleteSub.isPending}
+                className="flex-1 py-2.5 bg-red-700 text-white text-sm font-semibold rounded hover:bg-red-600 transition-colors disabled:opacity-60"
+                style={{ fontFamily: "Inter, sans-serif" }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AdminLayout>
   );
 }

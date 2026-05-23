@@ -266,6 +266,12 @@ export async function getSubscribers() {
   return db.select().from(subscribers).orderBy(desc(subscribers.createdAt));
 }
 
+export async function deleteSubscriber(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  await db.delete(subscribers).where(eq(subscribers.id, id));
+}
+
 // ─── Cart Sessions ────────────────────────────────────────────────────────────
 export async function getCartSession(sessionId: string) {
   const db = await getDb();

@@ -15,6 +15,7 @@ import {
   deleteProduct,
   deleteTradeShow,
   deleteWoodBlank,
+  deleteSubscriber,
   getDashboardStats,
   getOrderById,
   getOrderByNumber,
@@ -398,6 +399,13 @@ export const appRouter = router({
       }),
 
     list: adminProcedure.query(() => getSubscribers()),
+
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await deleteSubscriber(input.id);
+        return { success: true };
+      }),
   }),
 
   // ─── Cart (session-based, no login required) ──────────────────────────────

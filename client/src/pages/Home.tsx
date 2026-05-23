@@ -1,6 +1,6 @@
 import { trpc } from "@/lib/trpc";
 import { Link } from "wouter";
-import { ArrowRight, ChevronDown, Truck } from "lucide-react";
+import { ArrowRight, ChevronDown, Truck, MapPin, Calendar } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import PublicLayout from "@/components/PublicLayout";
 
@@ -9,6 +9,7 @@ const ABOUT_IMAGE = "https://d2xsxph8kpxj0f.cloudfront.net/310519663636425749/Nn
 
 export default function Home() {
   const { data: featuredProducts, isLoading } = trpc.products.list.useQuery({ featured: true, limit: 6 });
+  const { data: upcomingShows, isLoading: isLoadingShows } = trpc.tradeShows.list.useQuery({ activeOnly: true });
 
   return (
     <PublicLayout>
@@ -132,6 +133,62 @@ export default function Home() {
           )}
         </div>
       </section>
+
+      {/* ─── Upcoming Shows ─────────────────────────────────────────────── */}
+      {!isLoadingShows && upcomingShows && upcomingShows.length > 0 && (
+        <section className="py-20 bg-white">
+          <div className="container">
+            <div className="text-center mb-14">
+              <p className="text-[#C9A227] text-xs tracking-[0.3em] uppercase mb-3" style={{ fontFamily: "Inter, sans-serif" }}>
+                Meet the Maker
+              </p>
+              <h2
+                className="text-[#3E2723] text-3xl md:text-4xl font-cinzel mb-4 relative inline-block"
+                style={{ fontFamily: "Cinzel, serif" }}
+              >
+                Upcoming Shows
+                <span className="block h-0.5 w-16 bg-[#C9A227] mx-auto mt-3" />
+              </h2>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {upcomingShows.map(show => (
+                <div key={show.id} className="bg-[#F5F0EB] p-8 rounded-lg border border-[#D7CCC8]/50 hover:shadow-xl transition-shadow text-center">
+                  <h3 className="text-xl text-[#3E2723] font-cinzel font-semibold mb-3" style={{ fontFamily: "Cinzel, serif" }}>
+                    {show.name}
+                  </h3>
+                  <div className="flex flex-col items-center gap-3 text-[#5D4037]" style={{ fontFamily: "Inter, sans-serif" }}>
+                    <div className="flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-[#C9A227]" />
+                      <span className="text-sm font-medium">
+                        {new Date(show.startDate).toLocaleDateString("en-US", { month: "long", day: "numeric" })}
+                        {show.endDate && show.endDate !== show.startDate && (
+                          <> – {new Date(show.endDate).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</>
+                        )}
+                        {(!show.endDate || show.endDate === show.startDate) && (
+                          <>, {new Date(show.startDate).getFullYear()}</>
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <MapPin className="w-4 h-4 text-[#C9A227]" />
+                      <span className="text-sm">{show.location}</span>
+                    </div>
+                  </div>
+                  {show.address && (
+                    <p className="text-xs text-[#8D6E63] mt-4" style={{ fontFamily: "Inter, sans-serif" }}>{show.address}</p>
+                  )}
+                  {show.boothNumber && (
+                    <p className="text-xs font-semibold text-[#3E2723] mt-2 tracking-wide uppercase bg-[#D7CCC8]/30 inline-block px-3 py-1 rounded" style={{ fontFamily: "Inter, sans-serif" }}>
+                      Booth {show.boothNumber}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ─── Brand Story ─────────────────────────────────────────────────── */}
       <section className="py-20 bg-[#3E2723]">
