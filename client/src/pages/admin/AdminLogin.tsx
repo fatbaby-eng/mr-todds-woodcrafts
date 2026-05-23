@@ -49,7 +49,7 @@ export default function AdminLogin() {
             Admin Sign In
           </h1>
           <p className="text-sm text-[#8D6E63]" style={{ fontFamily: "Inter, sans-serif" }}>
-            Mr. Todd's Woodcrafts
+            Mr. Todd's Workshop
           </p>
         </div>
 

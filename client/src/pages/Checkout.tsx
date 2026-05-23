@@ -151,7 +151,7 @@ export default function Checkout() {
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <span className="text-[#C9A227] font-cinzel text-lg font-semibold" style={{ fontFamily: "Cinzel, serif" }}>
-              Mr. Todd's Woodcrafts
+              Mr. Todd's Workshop
             </span>
           </Link>
           <div className="flex items-center gap-1 text-[#8D6E63] text-xs" style={{ fontFamily: "Inter, sans-serif" }}>

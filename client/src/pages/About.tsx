@@ -68,7 +68,7 @@ export default function About() {
               </h2>
               <div className="space-y-4 text-[#5D4037]" style={{ fontFamily: "Lora, serif" }}>
                 <p className="leading-relaxed">
-                  Mr. Todd's Woodcrafts started with trees that died in a yard in southeast Omaha. Two cherry and two apricot, planted by my mother-in-law about 35 years ago, taken down slowly by a nearby walnut. When the trees finally came down I could not bring myself to haul the wood off as firewood.
+                  Mr. Todd's Workshop started with trees that died in a yard in southeast Omaha. Two cherry and two apricot, planted by my mother-in-law about 35 years ago, taken down slowly by a nearby walnut. When the trees finally came down I could not bring myself to haul the wood off as firewood.
                 </p>
                 <p className="leading-relaxed">
                   I have cut down three of the four. The last apricot is still standing, dead, waiting.

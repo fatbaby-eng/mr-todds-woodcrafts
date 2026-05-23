@@ -59,7 +59,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                 className="text-[#D7CCC8] font-cinzel text-xs tracking-[0.2em] uppercase"
                 style={{ fontFamily: "Cinzel, serif" }}
               >
-                Woodcrafts
+                Workshop
               </div>
             </div>
           </Link>
@@ -159,7 +159,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
                   className="text-[#C9A227] font-cinzel text-lg font-semibold tracking-widest"
                   style={{ fontFamily: "Cinzel, serif" }}
                 >
-                  Mr. Todd's Woodcrafts
+                  Mr. Todd's Workshop
                 </span>
               </div>
               <p className="text-sm text-[#8D6E63] leading-relaxed" style={{ fontFamily: "Lora, serif" }}>
@@ -207,7 +207,7 @@ export default function PublicLayout({ children }: { children: React.ReactNode }
 
           <div className="border-t border-[#5D4037] pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-xs text-[#5D4037]" style={{ fontFamily: "Inter, sans-serif" }}>
-              © {new Date().getFullYear()} Mr. Todd's Woodcrafts. All rights reserved.
+              © {new Date().getFullYear()} Mr. Todd's Workshop. All rights reserved.
             </p>
             <p className="text-xs text-[#5D4037]" style={{ fontFamily: "Inter, sans-serif" }}>
               Handcrafted in Omaha, Nebraska

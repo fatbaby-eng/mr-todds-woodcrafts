@@ -131,7 +131,7 @@ export default function Kiosk() {
               className="text-[#F5F0EB] text-3xl font-cinzel"
               style={{ fontFamily: "Cinzel, serif" }}
             >
-              Mr. Todd's Woodcrafts
+              Mr. Todd's Workshop
             </h1>
           </div>
 
