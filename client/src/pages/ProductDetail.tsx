@@ -259,8 +259,9 @@ export default function ProductDetail() {
                         {quantity}
                       </span>
                       <button
-                        onClick={() => setQuantity((q) => q + 1)}
-                        className="px-3 py-2 text-[#5D4037] hover:bg-[#F5F0EB] transition-colors"
+                        onClick={() => setQuantity((q) => Math.min(product.quantity, q + 1))}
+                        disabled={quantity >= product.quantity}
+                        className="px-3 py-2 text-[#5D4037] hover:bg-[#F5F0EB] disabled:opacity-50 transition-colors"
                       >
                         +
                       </button>

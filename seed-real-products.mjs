@@ -122,14 +122,8 @@ console.log("Adding real products to database...");
 for (const product of products) {
   try {
     await connection.execute(
-      `INSERT INTO products (name, slug, description, price, category, woodType, dimensions, quantity, featured, images, createdAt, updatedAt)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
-       ON DUPLICATE KEY UPDATE
-         description = VALUES(description),
-         price = VALUES(price),
-         images = VALUES(images),
-         featured = VALUES(featured),
-         updatedAt = NOW()`,
+      `INSERT IGNORE INTO products (name, slug, description, price, category, woodType, dimensions, quantity, featured, images, createdAt, updatedAt)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
       [
         product.name,
         product.slug,
