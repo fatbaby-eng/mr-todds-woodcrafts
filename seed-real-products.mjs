@@ -41,25 +41,29 @@ Approximate length: 8 inches.`,
     dimensions: "8 inches length",
     quantity: 1,
     featured: true,
-    images: JSON.stringify(["/manus-storage/real-cherry-scoop_3715bf4e.jpg"]),
+    images: JSON.stringify([
+      "/manus-storage/real-cherry-scoop_3715bf4e.jpg",
+      "/manus-storage/20260510_193238.jpg"
+    ]),
   },
   {
-    name: "Cherry Wood Wave Sculpture",
-    slug: "cherry-wave-sculpture",
-    description: `This is not a spoon. It's not a tool. It's a carved cherry wood object — a smooth sphere at one end, a flowing S-curve wave through the body, tapering to a point. Carved from a single piece of cherry, no cuts, no joints.
-
-It lives on a desk. It sits in your hand while you think. It's the kind of thing people pick up and don't put down.
+    name: "Cherry Wood Wave Spoon",
+    slug: "cherry-wave-spoon",
+    description: `A hand-carved cherry wood spoon with a smooth flowing S-curve wave handle and a bowl. Carved from a single piece of cherry, no cuts, no joints.
 
 The cherry grain flows through the curves in a way that only happens when you carve with the wood instead of against it. Finished with beeswax and mineral oil until it feels like something that's been held for years.
 
 One of a kind.`,
     price: 5500,
-    category: "CUSTOM",
+    category: "SPOON",
     woodType: "CHERRY",
     dimensions: "7 inches length",
     quantity: 1,
     featured: true,
-    images: JSON.stringify(["/manus-storage/real-cherry-wave_57614cda.jpg"]),
+    images: JSON.stringify([
+      "/manus-storage/real-cherry-wave_57614cda.jpg",
+      "/manus-storage/20260509_065935.jpg"
+    ]),
   },
   {
     name: "Hand-Carved Cherry Wood Bowl",
