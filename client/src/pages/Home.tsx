@@ -45,7 +45,7 @@ export default function Home() {
             className="text-[#D7CCC8] text-lg md:text-xl max-w-2xl mx-auto mb-3 leading-relaxed"
             style={{ fontFamily: "Lora, serif" }}
           >
-            Hand-carved kitchen and home objects shaped by the wood as much as the hand. Cherry, walnut, apricot, and other hardwoods. One of one.
+            Measured in Grain and Grace.
           </p>
           <p
             className="text-[#C9A227] text-sm tracking-[0.2em] uppercase mb-10"
