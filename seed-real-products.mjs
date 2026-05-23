@@ -23,7 +23,7 @@ Approximate length: 5 inches.`,
     dimensions: "5 inches length",
     quantity: 1,
     featured: true,
-    images: JSON.stringify(["/manus-storage/real-lilac-spoon_ec3a4c5e.jpg"]),
+    images: JSON.stringify(["/images/products/real-lilac-spoon.jpg"]),
   },
   {
     name: "Cherry Wood Coffee Scoop with Ring Handle",
@@ -42,8 +42,7 @@ Approximate length: 8 inches.`,
     quantity: 1,
     featured: true,
     images: JSON.stringify([
-      "/manus-storage/real-cherry-scoop_3715bf4e.jpg",
-      "/manus-storage/20260510_193238.jpg"
+      "/images/products/real-cherry-scoop.jpg"
     ]),
   },
   {
@@ -61,8 +60,7 @@ One of a kind.`,
     quantity: 1,
     featured: true,
     images: JSON.stringify([
-      "/manus-storage/real-cherry-wave_57614cda.jpg",
-      "/manus-storage/20260509_065935.jpg"
+      "/images/products/real-cherry-wave.jpg"
     ]),
   },
   {
@@ -82,9 +80,7 @@ Finished with food-safe mineral oil. Approximately 10 × 7 inches, 2 inches tall
     quantity: 1,
     featured: true,
     images: JSON.stringify([
-      "/manus-storage/real-cherry-bowl-side_43ab19f8.jpg",
-      "/manus-storage/real-cherry-bowl-top_cb2b8f24.jpg",
-      "/manus-storage/real-cherry-bowl-ext_124dd3bd.jpg",
+      "/images/products/real-cherry-bowl.jpg"
     ]),
   },
 ];
