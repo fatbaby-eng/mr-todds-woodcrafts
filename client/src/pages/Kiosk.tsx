@@ -1,7 +1,8 @@
 import { trpc } from "@/lib/trpc";
 import { useState, useEffect, useCallback, useRef } from "react";
-import { ChevronLeft, ChevronRight, ShoppingBag, Maximize, Minimize, QrCode } from "lucide-react";
+import { ChevronLeft, ChevronRight, ShoppingBag, Maximize, Minimize, QrCode, X } from "lucide-react";
 import QRCodeLib from "qrcode";
+import { Link } from "wouter";
 
 const SLIDE_DURATION = 6000; // ms per product
 
@@ -265,6 +266,13 @@ export default function Kiosk() {
 
       {/* Controls */}
       <div className="absolute top-6 right-6 flex items-center gap-3">
+        <Link 
+          href="/"
+          className="w-10 h-10 rounded-full bg-[#2D1A0E]/80 backdrop-blur-sm flex items-center justify-center text-[#8D6E63] hover:text-red-400 transition-colors"
+          title="Exit Kiosk"
+        >
+          <X className="w-5 h-5" />
+        </Link>
         <button
           onClick={() => setShowQR(!showQR)}
           className="w-10 h-10 rounded-full bg-[#2D1A0E]/80 backdrop-blur-sm flex items-center justify-center text-[#8D6E63] hover:text-[#C9A227] transition-colors"
