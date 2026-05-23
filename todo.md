@@ -1,5 +1,11 @@
 # Mr. Todd's Woodcrafts — Project TODO
 
+## Brand Voice & Guidelines (For AI Agents)
+- **Voice:** First-person ("I"). Honest, unpretentious, direct. 
+- **Style:** No em dashes, no exclamation points, no marketing language (e.g., "sustainably sourced", "beautifully crafted", "perfect for your home"). Let the work speak for itself.
+- **Key phrases:** "One of one", "Measured in grain and grace".
+- **Origin Story:** Started with four trees (two cherry, two apricot) planted by his mother-in-law 35 years ago, taken down by a walnut tree. Three harvested, the last apricot still standing.
+
 ## Phase 1: Schema, API, Dependencies
 - [x] Install qrcode, stripe packages
 - [x] Define full DB schema (products, orders, order_items, wood_blanks, trade_shows, subscribers, cart_sessions)
@@ -84,3 +90,11 @@
 - [x] Update footer brand statement to: "Hand-carved kitchen and home objects. Material-led, one of one. Made in Omaha, Nebraska."
 - [x] Add visible placeholder note in admin/site flagging hero image as needing replacement with real workshop photo (TODO comment in code + dimmed overlay on About page workshop image)
 - [x] Enforce voice guardrails: first person, "one of one", no em dashes, no marketing language throughout
+
+## Live Adjustments & Fixes (May 23, 2026)
+- [x] **Database Setup Fix:** Run `seed-real-products.mjs` automatically on `npm start` so production Railway instances load the exact product catalog and image paths correctly.
+- [x] **Product Content Update:** Added Apricot Bracelet, additional angles for Hand-Carved Cherry Wood Bowl, and Cherry Wood Wave Spoon.
+- [x] **Admin Tool Fix:** Resolved the input focus bug when typing dimensions by moving the internal `Field` component outside of the React render loop.
+- [x] **Admin Tool Feature:** Added a visual thumbnail grid with Left/Right reordering arrows and Delete buttons for product images.
+- [x] **Admin Tool Feature:** Added the ability to permanently delete newsletter subscribers (added backend mutation, db method, and frontend Trash button with confirmation).
+- [x] **Public Site Update:** Added "Upcoming Shows" section to `Home.tsx` to publicly display events marked "Active" in the Admin Panel (previously they only appeared on the POS Kiosk).
