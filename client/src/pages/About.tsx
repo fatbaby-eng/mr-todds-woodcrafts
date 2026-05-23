@@ -85,17 +85,14 @@ export default function About() {
               </div>
             </div>
             <div className="relative">
-              {/* TODO: Replace ABOUT_IMAGE with a real photo of Todd's workshop. Current image is placeholder stock photography. */}
-              <img
-                src={ABOUT_IMAGE}
-                alt="Todd's workshop — placeholder, needs real photo"
-                className="w-full rounded-lg shadow-xl object-cover aspect-[4/3] opacity-60"
+              <video
+                src="/woodCart.mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full rounded-lg shadow-xl object-cover aspect-[4/3]"
               />
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="bg-[#3E2723]/80 text-[#C9A227] text-xs tracking-widest uppercase px-4 py-2 rounded" style={{ fontFamily: "Inter, sans-serif" }}>
-                  Real workshop photo coming soon
-                </div>
-              </div>
               <div className="absolute -bottom-4 -left-4 bg-[#C9A227] text-[#3E2723] p-4 rounded shadow-lg hidden lg:block">
                 <p className="font-cinzel text-lg font-bold leading-tight" style={{ fontFamily: "Cinzel, serif" }}>Measured in</p>
                 <p className="font-cinzel text-lg font-bold leading-tight" style={{ fontFamily: "Cinzel, serif" }}>Grain and Grace</p>
