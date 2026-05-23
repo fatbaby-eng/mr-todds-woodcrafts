@@ -101,6 +101,20 @@ Finished with food-safe mineral oil. Approximately 10 × 7 inches, 2 inches tall
       "/images/products/real-apricot-bracelet-3.jpg"
     ]),
   },
+  {
+    name: "Apricot Apple Board",
+    slug: "apricot-apple-board",
+    description: `A hand-carved apricot serving board shaped like an apple, complete with a carved leaf detail. Carved from a local Omaha apricot tree. Perfect for cutting, serving, or simply displaying as a kitchen centerpiece. One of one.`,
+    price: 8500,
+    category: "SERVING",
+    woodType: "APRICOT",
+    dimensions: "6.25\" x 11\" x 0.875\"",
+    quantity: 1,
+    featured: true,
+    images: JSON.stringify([
+      "/images/products/apricot-apple-board.jpg"
+    ]),
+  },
 ];
 
 console.log("Adding real products to database...");
