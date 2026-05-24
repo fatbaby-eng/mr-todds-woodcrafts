@@ -29,8 +29,9 @@ import Kiosk from "./pages/Kiosk";
 
 function Router() {
   return (
-    <Switch>
+    <>
       <ScrollToTop />
+      <Switch>
       {/* Public storefront */}
       <Route path="/" component={Home} />
       <Route path="/shop" component={Shop} />
@@ -54,7 +55,8 @@ function Router() {
       {/* Fallback */}
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
-    </Switch>
+      </Switch>
+    </>
   );
 }
 
