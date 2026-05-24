@@ -45,7 +45,7 @@ export default function ProductDetail() {
     }
     if (product.customOptions && Array.isArray(product.customOptions)) {
       for (const opt of product.customOptions) {
-        if (opt.type === "select" && opt.choices) {
+        if (opt.type === "select" && Array.isArray(opt.choices)) {
           const choice = opt.choices.find((c: any) => c.label === customSelections[opt.name]);
           if (choice && choice.priceOverride) itemPrice += choice.priceOverride;
         }
@@ -206,7 +206,7 @@ export default function ProductDetail() {
                     }
                     if (product.customOptions && Array.isArray(product.customOptions)) {
                       for (const opt of product.customOptions) {
-                        if (opt.type === "select" && opt.choices) {
+                        if (opt.type === "select" && Array.isArray(opt.choices)) {
                           const choice = opt.choices.find((c: any) => c.label === customSelections[opt.name]);
                           if (choice && choice.priceOverride) currentPrice += choice.priceOverride;
                         }
@@ -291,15 +291,17 @@ export default function ProductDetail() {
                             {opt.name}
                             {opt.required && <span className="text-[#C9A227] normal-case tracking-normal">Required</span>}
                           </label>
-                          {opt.type === "select" && opt.choices ? (
-                            <select 
-                              value={customSelections[opt.name] || ""}
-                              onChange={e => setCustomSelections(prev => ({ ...prev, [opt.name]: e.target.value }))}
+                          {opt.type === "select" && Array.isArray(opt.choices) ? (
+                            <select
                               className="w-full px-3 py-2 bg-[#F5F0EB] border border-[#D7CCC8] rounded text-sm focus:outline-none focus:border-[#3E2723] text-[#3E2723]"
+                              value={customSelections[opt.name] || ""}
+                              onChange={(e) => setCustomSelections(s => ({ ...s, [opt.name]: e.target.value }))}
                             >
-                              <option value="">-- Select --</option>
-                              {opt.choices.map((c: any) => (
-                                <option key={c.label} value={c.label}>{c.label} {c.priceOverride ? `(+$${(c.priceOverride / 100).toFixed(2)})` : ''}</option>
+                              <option value="">Select an option</option>
+                              {opt.choices.map((c: any, idx: number) => (
+                                <option key={idx} value={c.label}>
+                                  {c.label} {c.priceOverride ? `(+$${(c.priceOverride / 100).toFixed(2)})` : ""}
+                                </option>
                               ))}
                             </select>
                           ) : (

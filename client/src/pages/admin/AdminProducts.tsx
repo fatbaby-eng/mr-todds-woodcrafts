@@ -109,7 +109,10 @@ export default function AdminProducts() {
       status: p.status, quantity: String(p.quantity), leadTimeDays: p.leadTimeDays ? String(p.leadTimeDays) : "",
       featured: p.featured, allowsCustomWood: p.allowsCustomWood ?? false, images: imgs.join("\n"), dimensions: p.dimensions ?? "",
       careInstructions: p.careInstructions ?? "",
-      customOptions: (p.customOptions as any[]) || [],
+      customOptions: ((p.customOptions as any[]) || []).map(opt => ({
+        ...opt,
+        choices: Array.isArray(opt.choices) ? opt.choices.map((c: any) => c.label).join(", ") : (opt.choices || "")
+      })),
       volumeDiscounts: (p.volumeDiscounts as any[]) || [],
     });
     setEditId(p.id);
@@ -147,7 +150,10 @@ export default function AdminProducts() {
       images: form.images.split("\n").map((s) => s.trim()).filter(Boolean),
       dimensions: form.dimensions || undefined,
       careInstructions: form.careInstructions || undefined,
-      customOptions: form.customOptions,
+      customOptions: form.customOptions.map(opt => ({
+        ...opt,
+        choices: opt.type === "select" ? opt.choices.split(",").map(c => ({ label: c.trim() })).filter(c => c.label) : undefined
+      })),
       volumeDiscounts: form.volumeDiscounts,
     };
     if (modal === "create") createProduct.mutate(payload);
