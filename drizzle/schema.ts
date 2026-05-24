@@ -156,6 +156,20 @@ export const subscribers = mysqlTable("subscribers", {
 export type Subscriber = typeof subscribers.$inferSelect;
 export type InsertSubscriber = typeof subscribers.$inferInsert;
 
+// ─── Contact Messages ────────────────────────────────────────────────────────
+export const contactMessages = mysqlTable("contact_messages", {
+  id: int("id").autoincrement().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  subject: varchar("subject", { length: 255 }),
+  message: text("message").notNull(),
+  status: mysqlEnum("status", ["unread", "read", "archived"]).default("unread").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type ContactMessage = typeof contactMessages.$inferSelect;
+export type InsertContactMessage = typeof contactMessages.$inferInsert;
+
 // ─── Cart Sessions (server-side persistence) ──────────────────────────────────
 export const cartSessions = mysqlTable("cart_sessions", {
   id: int("id").autoincrement().primaryKey(),

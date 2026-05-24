@@ -34,6 +34,9 @@ import {
   updateProduct,
   updateTradeShow,
   updateWoodBlank,
+  getContactMessages,
+  createContactMessage,
+  updateContactMessageStatus,
 } from "./db";
 import { storagePut } from "./storage";
 
@@ -426,6 +429,33 @@ export const appRouter = router({
       .input(z.object({ id: z.number() }))
       .mutation(async ({ input }) => {
         await deleteSubscriber(input.id);
+        return { success: true };
+      }),
+  }),
+
+  // ─── Contact Messages ───────────────────────────────────────────────────────
+  contactMessages: router({
+    submit: publicProcedure
+      .input(z.object({
+        name: z.string().min(1),
+        email: z.string().email(),
+        subject: z.string().optional(),
+        message: z.string().min(1)
+      }))
+      .mutation(async ({ input }) => {
+        await createContactMessage(input);
+        return { success: true };
+      }),
+
+    list: adminProcedure.query(() => getContactMessages()),
+
+    updateStatus: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        status: z.enum(["unread", "read", "archived"])
+      }))
+      .mutation(async ({ input }) => {
+        await updateContactMessageStatus(input.id, input.status);
         return { success: true };
       }),
   }),

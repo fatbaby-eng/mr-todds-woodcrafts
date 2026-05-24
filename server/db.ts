@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, like, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, like, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser,
@@ -10,6 +10,7 @@ import {
   tradeShows,
   users,
   woodBlanks,
+  contactMessages,
   type InsertProduct,
   type InsertOrder,
   type InsertOrderItem,
@@ -17,6 +18,7 @@ import {
   type InsertTradeShow,
   type InsertSubscriber,
   type InsertCartSession,
+  type InsertContactMessage,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -277,6 +279,25 @@ export async function deleteSubscriber(id: number) {
   const db = await getDb();
   if (!db) throw new Error("DB unavailable");
   await db.delete(subscribers).where(eq(subscribers.id, id));
+}
+
+// ─── Contact Messages ─────────────────────────────────────────────────────────
+export async function getContactMessages() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(contactMessages).orderBy(desc(contactMessages.createdAt));
+}
+
+export async function createContactMessage(data: InsertContactMessage) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  await db.insert(contactMessages).values(data);
+}
+
+export async function updateContactMessageStatus(id: number, status: "unread" | "read" | "archived") {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  await db.update(contactMessages).set({ status }).where(eq(contactMessages.id, id));
 }
 
 // ─── Cart Sessions ────────────────────────────────────────────────────────────

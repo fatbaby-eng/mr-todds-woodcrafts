@@ -21,8 +21,9 @@ import AdminLogin from "./pages/admin/AdminLogin";
 import AdminProducts from "./pages/admin/AdminProducts";
 import AdminOrders from "./pages/admin/AdminOrders";
 import AdminInventory from "./pages/admin/AdminInventory";
-import AdminShows from "./pages/admin/AdminShows";
-import AdminSubscribers from "./pages/admin/AdminSubscribers";
+import AdminShows from "@/pages/admin/AdminShows";
+import AdminSubscribers from "@/pages/admin/AdminSubscribers";
+import AdminMessages from "@/pages/admin/AdminMessages";
 
 // Kiosk
 import Kiosk from "./pages/Kiosk";
@@ -48,6 +49,7 @@ function Router() {
       <Route path="/admin/inventory" component={AdminInventory} />
       <Route path="/admin/shows" component={AdminShows} />
       <Route path="/admin/subscribers" component={AdminSubscribers} />
+      <Route path="/admin/messages" component={AdminMessages} />
 
       {/* Kiosk / Trade-show display */}
       <Route path="/kiosk" component={Kiosk} />

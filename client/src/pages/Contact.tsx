@@ -10,7 +10,7 @@ export default function Contact() {
   });
   const [submitted, setSubmitted] = useState(false);
 
-  const sendMessage = trpc.contact.send.useMutation({
+  const sendMessage = trpc.contactMessages.submit.useMutation({
     onSuccess: () => {
       setSubmitted(true);
       toast.success("Message sent! Todd will reply within 1-2 business days.");
