@@ -53,6 +53,7 @@ const cartItemSchema = z.object({
   imageUrl: z.string().optional(),
   woodType: z.string().optional(),
   slug: z.string(),
+  customSelections: z.record(z.string()).optional(),
 });
 
 export const appRouter = router({
@@ -116,6 +117,8 @@ export const appRouter = router({
         dimensions: z.string().optional(),
         careInstructions: z.string().optional(),
         weight: z.number().int().optional(),
+        customOptions: z.array(z.any()).optional(),
+        volumeDiscounts: z.array(z.any()).optional(),
       }))
       .mutation(async ({ input }) => {
         await createProduct({ ...input, images: input.images });
@@ -140,6 +143,8 @@ export const appRouter = router({
         dimensions: z.string().optional(),
         careInstructions: z.string().optional(),
         weight: z.number().int().optional(),
+        customOptions: z.array(z.any()).optional(),
+        volumeDiscounts: z.array(z.any()).optional(),
       }))
       .mutation(async ({ input }) => {
         const { id, ...data } = input;
@@ -234,6 +239,7 @@ export const appRouter = router({
           quantity: z.number().int().min(1),
           woodType: z.string().optional(),
           imageUrl: z.string().optional(),
+          customSelections: z.record(z.string()).optional(),
         })),
         shippingCost: z.number().int().default(0),
         taxAmount: z.number().int().default(0),
@@ -272,6 +278,7 @@ export const appRouter = router({
             quantity: item.quantity,
             woodType: item.woodType,
             imageUrl: item.imageUrl,
+            customSelections: item.customSelections,
           }))
         );
 

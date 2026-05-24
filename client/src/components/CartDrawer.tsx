@@ -79,7 +79,7 @@ export default function CartDrawer() {
             <ul className="space-y-4">
               {items.map((item) => (
                 <li
-                  key={item.productId}
+                  key={item.id}
                   className="flex gap-4 py-4 border-b"
                   style={{ borderColor: "#D7CCC8" }}
                 >
@@ -113,6 +113,11 @@ export default function CartDrawer() {
                         {item.woodType.charAt(0) + item.woodType.slice(1).toLowerCase()} Wood
                       </p>
                     )}
+                    {item.customSelections && Object.entries(item.customSelections).map(([k, v]) => (
+                      <p key={k} className="text-xs text-[#8D6E63] mt-0.5" style={{ fontFamily: "Inter, sans-serif" }}>
+                        {k}: {v}
+                      </p>
+                    ))}
                     <p className="text-sm font-semibold text-[#C9A227] mt-1" style={{ fontFamily: "Inter, sans-serif" }}>
                       {formatPrice(item.price)}
                     </p>
@@ -120,7 +125,7 @@ export default function CartDrawer() {
                     {/* Quantity controls */}
                     <div className="flex items-center gap-2 mt-2">
                       <button
-                        onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                        onClick={() => updateQuantity(item.id, item.quantity - 1)}
                         className="w-6 h-6 rounded border border-[#D7CCC8] flex items-center justify-center text-[#5D4037] hover:border-[#C9A227] hover:text-[#C9A227] transition-colors"
                       >
                         <Minus className="w-3 h-3" />
@@ -129,13 +134,13 @@ export default function CartDrawer() {
                         {item.quantity}
                       </span>
                       <button
-                        onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
                         className="w-6 h-6 rounded border border-[#D7CCC8] flex items-center justify-center text-[#5D4037] hover:border-[#C9A227] hover:text-[#C9A227] transition-colors"
                       >
                         <Plus className="w-3 h-3" />
                       </button>
                       <button
-                        onClick={() => removeItem(item.productId)}
+                        onClick={() => removeItem(item.id)}
                         className="ml-auto text-[#8D6E63] hover:text-red-500 transition-colors"
                       >
                         <Trash2 className="w-3.5 h-3.5" />

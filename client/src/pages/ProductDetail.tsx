@@ -23,6 +23,7 @@ export default function ProductDetail() {
   const [activeImage, setActiveImage] = useState(0);
   const [added, setAdded] = useState(false);
   const [selectedWood, setSelectedWood] = useState<string | null>(null);
+  const [customSelections, setCustomSelections] = useState<Record<string, string>>({});
 
   const { data: product, isLoading } = trpc.products.bySlug.useQuery({ slug: slug ?? "" });
   const { data: related } = trpc.products.list.useQuery(
@@ -35,15 +36,31 @@ export default function ProductDetail() {
 
   const handleAddToCart = () => {
     if (!product) return;
-    const images = Array.isArray(product.images) ? product.images : [];
+    let itemPrice = product.price;
+    if (product.volumeDiscounts && Array.isArray(product.volumeDiscounts)) {
+      const applicableDiscount = [...product.volumeDiscounts]
+        .sort((a, b) => b.quantity - a.quantity)
+        .find(d => quantity >= d.quantity);
+      if (applicableDiscount) itemPrice = applicableDiscount.pricePerUnit;
+    }
+    if (product.customOptions && Array.isArray(product.customOptions)) {
+      for (const opt of product.customOptions) {
+        if (opt.type === "select" && opt.choices) {
+          const choice = opt.choices.find((c: any) => c.label === customSelections[opt.name]);
+          if (choice && choice.priceOverride) itemPrice += choice.priceOverride;
+        }
+      }
+    }
+
     addItem({
       productId: product.id,
       quantity,
-      price: product.price,
+      price: itemPrice,
       name: product.name,
       imageUrl: images[0],
       woodType: selectedWood || product.woodType,
       slug: product.slug,
+      customSelections,
     });
     setAdded(true);
     toast.success(`${product.name} added to cart`);
@@ -179,8 +196,30 @@ export default function ProductDetail() {
               {/* Price */}
               <div className="flex items-baseline gap-3 mb-6">
                 <span className="text-3xl font-semibold text-[#3E2723]" style={{ fontFamily: "Inter, sans-serif" }}>
-                  {formatPrice(product.price)}
+                  {(() => {
+                    let currentPrice = product.price;
+                    if (product.volumeDiscounts && Array.isArray(product.volumeDiscounts)) {
+                      const applicableDiscount = [...product.volumeDiscounts]
+                        .sort((a, b) => b.quantity - a.quantity)
+                        .find(d => quantity >= d.quantity);
+                      if (applicableDiscount) currentPrice = applicableDiscount.pricePerUnit;
+                    }
+                    if (product.customOptions && Array.isArray(product.customOptions)) {
+                      for (const opt of product.customOptions) {
+                        if (opt.type === "select" && opt.choices) {
+                          const choice = opt.choices.find((c: any) => c.label === customSelections[opt.name]);
+                          if (choice && choice.priceOverride) currentPrice += choice.priceOverride;
+                        }
+                      }
+                    }
+                    return formatPrice(currentPrice);
+                  })()}
                 </span>
+                {product.volumeDiscounts && Array.isArray(product.volumeDiscounts) && product.volumeDiscounts.length > 0 && (
+                  <div className="flex flex-wrap gap-2 text-xs text-[#8D6E63] border-l border-[#D7CCC8] pl-3" style={{ fontFamily: "Inter, sans-serif" }}>
+                    Volume pricing available
+                  </div>
+                )}
                 {product.status === "MADE_TO_ORDER" && product.leadTimeDays && (
                   <div className="flex items-center gap-1 text-sm text-[#8D6E63]">
                     <Clock className="w-4 h-4" />
@@ -244,6 +283,38 @@ export default function ProductDetail() {
                     </div>
                   )}
 
+                  {product.customOptions && Array.isArray(product.customOptions) && product.customOptions.length > 0 && (
+                    <div className="space-y-4">
+                      {product.customOptions.map((opt: any, i: number) => (
+                        <div key={i} className="space-y-2 p-4 bg-white border border-[#D7CCC8] rounded shadow-sm">
+                          <label className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] flex justify-between items-center" style={{ fontFamily: "Inter, sans-serif" }}>
+                            {opt.name}
+                            {opt.required && <span className="text-[#C9A227] normal-case tracking-normal">Required</span>}
+                          </label>
+                          {opt.type === "select" && opt.choices ? (
+                            <select 
+                              value={customSelections[opt.name] || ""}
+                              onChange={e => setCustomSelections(prev => ({ ...prev, [opt.name]: e.target.value }))}
+                              className="w-full px-3 py-2 bg-[#F5F0EB] border border-[#D7CCC8] rounded text-sm focus:outline-none focus:border-[#3E2723] text-[#3E2723]"
+                            >
+                              <option value="">-- Select --</option>
+                              {opt.choices.map((c: any) => (
+                                <option key={c.label} value={c.label}>{c.label} {c.priceOverride ? `(+$${(c.priceOverride / 100).toFixed(2)})` : ''}</option>
+                              ))}
+                            </select>
+                          ) : (
+                            <input
+                              type="text"
+                              value={customSelections[opt.name] || ""}
+                              onChange={e => setCustomSelections(prev => ({ ...prev, [opt.name]: e.target.value }))}
+                              className="w-full px-3 py-2 bg-[#F5F0EB] border border-[#D7CCC8] rounded text-sm focus:outline-none focus:border-[#3E2723] text-[#3E2723]"
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   <div className="flex items-center gap-4">
                     <label className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63]" style={{ fontFamily: "Inter, sans-serif" }}>
                       Qty
@@ -275,11 +346,11 @@ export default function ProductDetail() {
 
                   <button
                     onClick={handleAddToCart}
-                    disabled={product.allowsCustomWood && !selectedWood}
+                    disabled={(product.allowsCustomWood && !selectedWood) || (product.customOptions && Array.isArray(product.customOptions) && product.customOptions.some((opt: any) => opt.required && !customSelections[opt.name]))}
                     className={`w-full py-4 flex items-center justify-center gap-2 text-sm font-semibold tracking-widest uppercase rounded transition-all duration-200 ${
                       added
                         ? "bg-emerald-600 text-white"
-                        : product.allowsCustomWood && !selectedWood
+                        : ((product.allowsCustomWood && !selectedWood) || (product.customOptions && Array.isArray(product.customOptions) && product.customOptions.some((opt: any) => opt.required && !customSelections[opt.name])))
                         ? "bg-[#D7CCC8] text-[#8D6E63] cursor-not-allowed"
                         : "bg-[#3E2723] text-[#D7CCC8] hover:bg-[#5D4037]"
                     }`}
@@ -312,12 +383,12 @@ export default function ProductDetail() {
               {/* Trust badges */}
               <div className="mt-8 pt-6 border-t border-[#D7CCC8] grid grid-cols-3 gap-4 text-center">
                 {[
-                  { icon: "✦", label: "Hand Carved" },
-                  { icon: "🌳", label: "Local Hardwood" },
-                  { icon: "🛡️", label: "Food Safe Finish" },
-                ].map((b) => (
-                  <div key={b.label}>
-                    <div className="text-xl mb-1">{b.icon}</div>
+                  { icon: <Check className="w-5 h-5 mx-auto text-[#C9A227]"/>, label: "Hand Carved" },
+                  { icon: <Star className="w-5 h-5 mx-auto text-[#C9A227]"/>, label: "Local Hardwood" },
+                  { icon: <Check className="w-5 h-5 mx-auto text-[#C9A227]"/>, label: "Food Safe Finish" },
+                ].map((b, i) => (
+                  <div key={i}>
+                    <div className="mb-1">{b.icon}</div>
                     <p className="text-xs text-[#8D6E63]" style={{ fontFamily: "Inter, sans-serif" }}>
                       {b.label}
                     </p>

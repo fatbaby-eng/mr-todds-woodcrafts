@@ -44,6 +44,17 @@ export const products = mysqlTable("products", {
   dimensions: varchar("dimensions", { length: 100 }),
   careInstructions: text("careInstructions"),
   weight: int("weight"), // in grams
+  customOptions: json("customOptions").$type<Array<{
+    id: string;
+    name: string;
+    type: "text" | "select";
+    required: boolean;
+    choices?: Array<{ label: string; priceOverride?: number }>;
+  }>>().default([]),
+  volumeDiscounts: json("volumeDiscounts").$type<Array<{
+    quantity: number;
+    pricePerUnit: number;
+  }>>().default([]),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -92,6 +103,7 @@ export const orderItems = mysqlTable("order_items", {
   quantity: int("quantity").notNull(),
   woodType: varchar("woodType", { length: 32 }),
   imageUrl: text("imageUrl"),
+  customSelections: json("customSelections").$type<Record<string, string>>(),
 });
 
 export type OrderItem = typeof orderItems.$inferSelect;
@@ -156,6 +168,7 @@ export const cartSessions = mysqlTable("cart_sessions", {
     imageUrl?: string;
     woodType?: string;
     slug: string;
+    customSelections?: Record<string, string>;
   }>>().notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),

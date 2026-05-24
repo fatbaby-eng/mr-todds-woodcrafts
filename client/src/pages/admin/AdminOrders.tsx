@@ -204,6 +204,11 @@ export default function AdminOrders() {
                           <div>
                             <p className="text-sm text-[#F5F0EB]" style={{ fontFamily: "Inter, sans-serif" }}>{item.productName}</p>
                             <p className="text-xs text-[#8D6E63]" style={{ fontFamily: "Inter, sans-serif" }}>Qty: {item.quantity}</p>
+                            {item.customSelections && Object.entries(item.customSelections).map(([key, val]) => (
+                              <p key={key} className="text-[11px] text-[#C9A227] italic mt-0.5" style={{ fontFamily: "Inter, sans-serif" }}>
+                                {key}: {val as string}
+                              </p>
+                            ))}
                           </div>
                         </div>
                         <p className="text-sm font-semibold text-[#F5F0EB]" style={{ fontFamily: "Inter, sans-serif" }}>

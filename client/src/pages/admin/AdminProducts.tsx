@@ -15,12 +15,14 @@ type ProductForm = {
   woodType: typeof WOOD_TYPES[number]; category: typeof CATEGORIES[number];
   status: typeof STATUSES[number]; quantity: string; leadTimeDays: string;
   featured: boolean; allowsCustomWood: boolean; images: string; dimensions: string; careInstructions: string;
+  customOptions: string; volumeDiscounts: string;
 };
 
 const defaultForm: ProductForm = {
   name: "", slug: "", description: "", price: "", woodType: "CHERRY",
   category: "SPOON", status: "IN_STOCK", quantity: "1", leadTimeDays: "",
   featured: false, allowsCustomWood: false, images: "", dimensions: "", careInstructions: "",
+  customOptions: "[]", volumeDiscounts: "[]",
 };
 
 function slugify(s: string) {
@@ -87,6 +89,8 @@ export default function AdminProducts() {
       status: p.status, quantity: String(p.quantity), leadTimeDays: p.leadTimeDays ? String(p.leadTimeDays) : "",
       featured: p.featured, allowsCustomWood: p.allowsCustomWood ?? false, images: imgs.join("\n"), dimensions: p.dimensions ?? "",
       careInstructions: p.careInstructions ?? "",
+      customOptions: JSON.stringify(p.customOptions || [], null, 2),
+      volumeDiscounts: JSON.stringify(p.volumeDiscounts || [], null, 2),
     });
     setEditId(p.id);
     setModal("edit");
@@ -111,6 +115,15 @@ export default function AdminProducts() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    let parsedCustomOptions = [];
+    let parsedVolumeDiscounts = [];
+    try {
+      parsedCustomOptions = JSON.parse(form.customOptions || "[]");
+      parsedVolumeDiscounts = JSON.parse(form.volumeDiscounts || "[]");
+    } catch (err) {
+      toast.error("Invalid JSON in Custom Options or Volume Discounts.");
+      return;
+    }
     const payload = {
       name: form.name, slug: form.slug || slugify(form.name),
       description: form.description || undefined,
@@ -123,6 +136,8 @@ export default function AdminProducts() {
       images: form.images.split("\n").map((s) => s.trim()).filter(Boolean),
       dimensions: form.dimensions || undefined,
       careInstructions: form.careInstructions || undefined,
+      customOptions: parsedCustomOptions,
+      volumeDiscounts: parsedVolumeDiscounts,
     };
     if (modal === "create") createProduct.mutate(payload);
     else if (modal === "edit" && editId) updateProduct.mutate({ id: editId, ...payload });
@@ -137,14 +152,39 @@ export default function AdminProducts() {
           <h1 className="font-cinzel text-[#F5F0EB] text-2xl" style={{ fontFamily: "Cinzel, serif" }}>
             Products
           </h1>
-          <button
-            onClick={openCreate}
-            className="flex items-center gap-2 px-4 py-2 bg-[#C9A227] text-[#1A1008] font-semibold text-sm rounded hover:bg-[#D4B03A] transition-colors"
-            style={{ fontFamily: "Inter, sans-serif" }}
-          >
-            <Plus className="w-4 h-4" />
-            New Product
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                if (!products) return;
+                const headers = ["ID", "Name", "Slug", "Price (cents)", "Quantity", "Wood Type", "Category", "Status", "Featured", "Dimensions"];
+                const rows = products.map(p => [
+                  p.id, `"${p.name}"`, p.slug, p.price, p.quantity, p.woodType, p.category, p.status, p.featured, `"${p.dimensions ?? ""}"`
+                ]);
+                const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+                const blob = new Blob([csv], { type: "text/csv" });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `products-export-${new Date().toISOString().split("T")[0]}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-[#2D1A0E] text-[#C9A227] font-semibold text-sm rounded hover:bg-[#3E2723] transition-colors border border-[#C9A227]"
+              style={{ fontFamily: "Inter, sans-serif" }}
+            >
+              Export CSV
+            </button>
+            <button
+              onClick={openCreate}
+              className="flex items-center gap-2 px-4 py-2 bg-[#C9A227] text-[#1A1008] font-semibold text-sm rounded hover:bg-[#D4B03A] transition-colors"
+              style={{ fontFamily: "Inter, sans-serif" }}
+            >
+              <Plus className="w-4 h-4" />
+              New Product
+            </button>
+          </div>
         </div>
 
         {/* Table */}
@@ -182,7 +222,7 @@ export default function AdminProducts() {
                             </div>
                             <div>
                               <p className="text-[#F5F0EB] font-medium">{p.name}</p>
-                              {p.featured && <span className="text-[10px] text-[#C9A227]">★ Featured</span>}
+                              {p.featured && <span className="text-[10px] text-[#C9A227] flex items-center gap-1 mt-0.5"><Star className="w-3 h-3 fill-[#C9A227]" /> Featured</span>}
                             </div>
                           </div>
                         </td>
@@ -247,6 +287,24 @@ export default function AdminProducts() {
                     value={form.slug}
                     onChange={(e) => setForm({ ...form, slug: e.target.value })}
                     className={inputCls} style={{ fontFamily: "Inter, sans-serif" }}
+                  />
+                </Field>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <Field label="Custom Options (JSON)">
+                  <textarea
+                    rows={4} value={form.customOptions}
+                    placeholder='[{"name": "Wood Choices", "type": "text", "required": true}]'
+                    onChange={(e) => setForm({ ...form, customOptions: e.target.value })}
+                    className={`${inputCls} resize-none font-mono`} style={{ fontFamily: "Inter, sans-serif" }}
+                  />
+                </Field>
+                <Field label="Volume Discounts (JSON)">
+                  <textarea
+                    rows={4} value={form.volumeDiscounts}
+                    placeholder='[{"quantity": 5, "pricePerUnit": 1300}]'
+                    onChange={(e) => setForm({ ...form, volumeDiscounts: e.target.value })}
+                    className={`${inputCls} resize-none font-mono`} style={{ fontFamily: "Inter, sans-serif" }}
                   />
                 </Field>
               </div>

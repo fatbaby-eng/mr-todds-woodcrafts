@@ -80,6 +80,7 @@ export default function Checkout() {
         productName: i.name,
         productSlug: i.slug,
         imageUrl: i.imageUrl,
+        customSelections: i.customSelections,
       })),
       shippingCost,
     });
@@ -405,7 +406,7 @@ export default function Checkout() {
               </h3>
               <ul className="space-y-3 mb-5">
                 {items.map((item) => (
-                  <li key={item.productId} className="flex items-start gap-3">
+                  <li key={item.id} className="flex items-start gap-3">
                     <div className="w-12 h-12 rounded overflow-hidden bg-[#F5F0EB] flex-shrink-0">
                       {item.imageUrl ? (
                         <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
@@ -422,6 +423,11 @@ export default function Checkout() {
                       <p className="text-xs text-[#8D6E63]" style={{ fontFamily: "Inter, sans-serif" }}>
                         Qty: {item.quantity}
                       </p>
+                      {item.customSelections && Object.entries(item.customSelections).map(([k, v]) => (
+                        <p key={k} className="text-[10px] text-[#8D6E63] mt-0.5" style={{ fontFamily: "Inter, sans-serif" }}>
+                          {k}: {v}
+                        </p>
+                      ))}
                     </div>
                     <p className="text-xs font-semibold text-[#3E2723]" style={{ fontFamily: "Inter, sans-serif" }}>
                       {formatPrice(item.price * item.quantity)}
@@ -439,8 +445,8 @@ export default function Checkout() {
                   <span>{shippingCost === 0 ? "Free" : formatPrice(shippingCost)}</span>
                 </div>
                 {shippingCost === 0 && (
-                  <p className="text-xs text-emerald-600" style={{ fontFamily: "Inter, sans-serif" }}>
-                    ✓ Free shipping applied
+                  <p className="text-xs text-emerald-600 flex items-center gap-1" style={{ fontFamily: "Inter, sans-serif" }}>
+                    <Check className="w-3 h-3" /> Free shipping applied
                   </p>
                 )}
                 <div className="flex justify-between font-semibold text-[#3E2723] pt-2 border-t border-[#D7CCC8]" style={{ fontFamily: "Inter, sans-serif" }}>

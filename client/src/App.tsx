@@ -5,6 +5,7 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { CartProvider } from "./contexts/CartContext";
+import ScrollToTop from "./components/ScrollToTop";
 
 // Public pages
 import Home from "./pages/Home";
@@ -29,6 +30,7 @@ import Kiosk from "./pages/Kiosk";
 function Router() {
   return (
     <Switch>
+      <ScrollToTop />
       {/* Public storefront */}
       <Route path="/" component={Home} />
       <Route path="/shop" component={Shop} />
