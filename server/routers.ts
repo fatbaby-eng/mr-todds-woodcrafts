@@ -12,6 +12,7 @@ import {
   createProduct,
   createTradeShow,
   createWoodBlank,
+  deleteOrder,
   deleteProduct,
   deleteTradeShow,
   deleteWoodBlank,
@@ -53,7 +54,7 @@ const cartItemSchema = z.object({
   imageUrl: z.string().optional(),
   woodType: z.string().optional(),
   slug: z.string(),
-  customSelections: z.record(z.string()).optional(),
+  customSelections: z.record(z.string(), z.string()).optional(),
 });
 
 export const appRouter = router({
@@ -216,6 +217,18 @@ export const appRouter = router({
         return { success: true };
       }),
 
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        const order = await getOrderById(input.id);
+        if (!order) throw new TRPCError({ code: "NOT_FOUND" });
+        if (order.status !== "CANCELLED") {
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Only cancelled orders can be deleted" });
+        }
+        await deleteOrder(input.id);
+        return { success: true };
+      }),
+
     // Public checkout creates an order
     create: publicProcedure
       .input(z.object({
@@ -239,7 +252,7 @@ export const appRouter = router({
           quantity: z.number().int().min(1),
           woodType: z.string().optional(),
           imageUrl: z.string().optional(),
-          customSelections: z.record(z.string()).optional(),
+          customSelections: z.record(z.string(), z.string()).optional(),
         })),
         shippingCost: z.number().int().default(0),
         taxAmount: z.number().int().default(0),

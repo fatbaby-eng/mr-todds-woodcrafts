@@ -196,6 +196,13 @@ export async function createOrderItems(items: InsertOrderItem[]) {
   await db.insert(orderItems).values(items);
 }
 
+export async function deleteOrder(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  await db.delete(orderItems).where(eq(orderItems.orderId, id));
+  await db.delete(orders).where(eq(orders.id, id));
+}
+
 // ─── Wood Blanks ──────────────────────────────────────────────────────────────
 export async function getWoodBlanks(opts?: { woodType?: string; status?: string }) {
   const db = await getDb();

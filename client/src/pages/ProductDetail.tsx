@@ -346,11 +346,11 @@ export default function ProductDetail() {
 
                   <button
                     onClick={handleAddToCart}
-                    disabled={(product.allowsCustomWood && !selectedWood) || (product.customOptions && Array.isArray(product.customOptions) && product.customOptions.some((opt: any) => opt.required && !customSelections[opt.name]))}
+                    disabled={Boolean((product.allowsCustomWood && !selectedWood) || (product.customOptions && Array.isArray(product.customOptions) && product.customOptions.some((opt: any) => opt.required && !customSelections[opt.name])))}
                     className={`w-full py-4 flex items-center justify-center gap-2 text-sm font-semibold tracking-widest uppercase rounded transition-all duration-200 ${
                       added
                         ? "bg-emerald-600 text-white"
-                        : ((product.allowsCustomWood && !selectedWood) || (product.customOptions && Array.isArray(product.customOptions) && product.customOptions.some((opt: any) => opt.required && !customSelections[opt.name])))
+                        : Boolean((product.allowsCustomWood && !selectedWood) || (product.customOptions && Array.isArray(product.customOptions) && product.customOptions.some((opt: any) => opt.required && !customSelections[opt.name])))
                         ? "bg-[#D7CCC8] text-[#8D6E63] cursor-not-allowed"
                         : "bg-[#3E2723] text-[#D7CCC8] hover:bg-[#5D4037]"
                     }`}

@@ -41,6 +41,15 @@ export default function AdminOrders() {
     onError: () => toast.error("Failed to update status."),
   });
 
+  const deleteOrder = trpc.orders.delete.useMutation({
+    onSuccess: () => {
+      utils.orders.list.invalidate();
+      setSelectedId(null);
+      toast.success("Order deleted.");
+    },
+    onError: (err) => toast.error(err.message || "Failed to delete order."),
+  });
+
   const shippingAddr = orderDetail?.shippingAddress as {
     line1?: string; line2?: string; city?: string; state?: string; zip?: string; country?: string;
   } | null;
@@ -160,6 +169,19 @@ export default function AdminOrders() {
                     </select>
                     <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none" />
                   </div>
+                  {orderDetail.status === "CANCELLED" && (
+                    <button
+                      onClick={() => {
+                        if (confirm("Are you sure you want to permanently delete this order?")) {
+                          deleteOrder.mutate({ id: orderDetail.id });
+                        }
+                      }}
+                      className="ml-auto text-xs font-semibold tracking-widest uppercase text-red-500 hover:text-red-400 transition-colors"
+                      style={{ fontFamily: "Inter, sans-serif" }}
+                    >
+                      Delete Order
+                    </button>
+                  )}
                 </div>
 
                 {/* Customer info */}

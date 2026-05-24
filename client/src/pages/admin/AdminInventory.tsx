@@ -5,7 +5,7 @@ import AdminLayout from "./AdminLayout";
 import { toast } from "sonner";
 
 const BLANK_STATUSES = ["RAW", "ROUGH_CUT", "CARVING", "FINISHED", "SOLD"] as const;
-const WOOD_TYPES = ["CHERRY", "WALNUT", "MAPLE", "MIXED", "OTHER"] as const;
+const WOOD_TYPES = ["CHERRY", "WALNUT", "MAPLE", "APRICOT", "MIXED", "OTHER"] as const;
 const formatPrice = (cents: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
 
