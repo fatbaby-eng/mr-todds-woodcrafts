@@ -62,22 +62,30 @@ export default function AdminProducts() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
     setUploading(true);
     try {
-      const reader = new FileReader();
-      reader.onload = async () => {
-        try {
-          const dataUrl = reader.result as string;
-          const { url } = await uploadImage.mutateAsync({ filename: file.name, contentType: file.type, dataUrl });
-          setForm((f) => ({ ...f, images: f.images ? f.images + "\n" + url : url }));
-          toast.success("Image uploaded!");
-        } catch { toast.error("Image upload failed."); }
-        setUploading(false);
-      };
-      reader.readAsDataURL(file);
-    } catch { toast.error("Image upload failed."); setUploading(false); }
+      const urls: string[] = [];
+      for (const file of files) {
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        const { url } = await uploadImage.mutateAsync({ filename: file.name, contentType: file.type, dataUrl });
+        urls.push(url);
+      }
+      setForm((f) => ({ ...f, images: f.images ? f.images + "\n" + urls.join("\n") : urls.join("\n") }));
+      toast.success(`${urls.length} image(s) uploaded!`);
+    } catch {
+      toast.error("Some images failed to upload.");
+    } finally {
+      setUploading(false);
+      // Reset input value so the same files can be selected again
+      if (e.target) e.target.value = "";
+    }
   }
 
   const openCreate = () => { setForm(defaultForm); setEditId(null); setModal("create"); };
@@ -372,7 +380,7 @@ export default function AdminProducts() {
               <Field label="Images">
                 <div className="space-y-3">
                   <div className="flex items-center gap-2">
-                    <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleImageUpload} />
+                    <input ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleImageUpload} />
                     <button type="button" onClick={() => fileInputRef.current?.click()} disabled={uploading}
                       className="flex items-center gap-2 px-3 py-2 rounded text-xs bg-[#3E2723] text-[#D7CCC8] hover:bg-[#5D4037] disabled:opacity-50">
                       {uploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
