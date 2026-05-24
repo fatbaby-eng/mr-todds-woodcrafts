@@ -10,19 +10,31 @@ const STATUSES = ["IN_STOCK", "MADE_TO_ORDER", "SOLD_OUT", "RETIRED"] as const;
 const formatPrice = (cents: number) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(cents / 100);
 
+type CustomOption = {
+  name: string;
+  type: string;
+  choices: string;
+  required: boolean;
+};
+
+type VolumeDiscount = {
+  quantity: number;
+  pricePerUnit: number;
+};
+
 type ProductForm = {
   name: string; slug: string; description: string; price: string;
   woodType: typeof WOOD_TYPES[number]; category: typeof CATEGORIES[number];
   status: typeof STATUSES[number]; quantity: string; leadTimeDays: string;
   featured: boolean; allowsCustomWood: boolean; images: string; dimensions: string; careInstructions: string;
-  customOptions: string; volumeDiscounts: string;
+  customOptions: CustomOption[]; volumeDiscounts: VolumeDiscount[];
 };
 
 const defaultForm: ProductForm = {
   name: "", slug: "", description: "", price: "", woodType: "CHERRY",
   category: "SPOON", status: "IN_STOCK", quantity: "1", leadTimeDays: "",
   featured: false, allowsCustomWood: false, images: "", dimensions: "", careInstructions: "",
-  customOptions: "[]", volumeDiscounts: "[]",
+  customOptions: [], volumeDiscounts: [],
 };
 
 function slugify(s: string) {
@@ -97,8 +109,8 @@ export default function AdminProducts() {
       status: p.status, quantity: String(p.quantity), leadTimeDays: p.leadTimeDays ? String(p.leadTimeDays) : "",
       featured: p.featured, allowsCustomWood: p.allowsCustomWood ?? false, images: imgs.join("\n"), dimensions: p.dimensions ?? "",
       careInstructions: p.careInstructions ?? "",
-      customOptions: JSON.stringify(p.customOptions || [], null, 2),
-      volumeDiscounts: JSON.stringify(p.volumeDiscounts || [], null, 2),
+      customOptions: (p.customOptions as any[]) || [],
+      volumeDiscounts: (p.volumeDiscounts as any[]) || [],
     });
     setEditId(p.id);
     setModal("edit");
@@ -123,15 +135,6 @@ export default function AdminProducts() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    let parsedCustomOptions = [];
-    let parsedVolumeDiscounts = [];
-    try {
-      parsedCustomOptions = JSON.parse(form.customOptions || "[]");
-      parsedVolumeDiscounts = JSON.parse(form.volumeDiscounts || "[]");
-    } catch (err) {
-      toast.error("Invalid JSON in Custom Options or Volume Discounts.");
-      return;
-    }
     const payload = {
       name: form.name, slug: form.slug || slugify(form.name),
       description: form.description || undefined,
@@ -144,8 +147,8 @@ export default function AdminProducts() {
       images: form.images.split("\n").map((s) => s.trim()).filter(Boolean),
       dimensions: form.dimensions || undefined,
       careInstructions: form.careInstructions || undefined,
-      customOptions: parsedCustomOptions,
-      volumeDiscounts: parsedVolumeDiscounts,
+      customOptions: form.customOptions,
+      volumeDiscounts: form.volumeDiscounts,
     };
     if (modal === "create") createProduct.mutate(payload);
     else if (modal === "edit" && editId) updateProduct.mutate({ id: editId, ...payload });
@@ -298,23 +301,59 @@ export default function AdminProducts() {
                   />
                 </Field>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <Field label="Custom Options (JSON)">
-                  <textarea
-                    rows={4} value={form.customOptions}
-                    placeholder='[{"name": "Wood Choices", "type": "text", "required": true}]'
-                    onChange={(e) => setForm({ ...form, customOptions: e.target.value })}
-                    className={`${inputCls} resize-none font-mono`} style={{ fontFamily: "Inter, sans-serif" }}
-                  />
-                </Field>
-                <Field label="Volume Discounts (JSON)">
-                  <textarea
-                    rows={4} value={form.volumeDiscounts}
-                    placeholder='[{"quantity": 5, "pricePerUnit": 1300}]'
-                    onChange={(e) => setForm({ ...form, volumeDiscounts: e.target.value })}
-                    className={`${inputCls} resize-none font-mono`} style={{ fontFamily: "Inter, sans-serif" }}
-                  />
-                </Field>
+              <div className="space-y-4 pt-4 border-t border-[#2D1A0E]">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-semibold tracking-widest uppercase text-[#F5F0EB]" style={{ fontFamily: "Cinzel, serif" }}>Custom Options</label>
+                  <button type="button" onClick={() => setForm({ ...form, customOptions: [...form.customOptions, { name: "", type: "text", choices: "", required: false }] })} className="text-xs text-[#C9A227] hover:text-[#D4AF37] flex items-center gap-1">
+                    <Plus className="w-3 h-3" /> Add Option
+                  </button>
+                </div>
+                {form.customOptions.map((opt, i) => (
+                  <div key={i} className="p-4 rounded border border-[#2D1A0E] bg-[#140C07] space-y-3 relative">
+                    <button type="button" onClick={() => setForm({ ...form, customOptions: form.customOptions.filter((_, idx) => idx !== i) })} className="absolute top-2 right-2 text-[#8D6E63] hover:text-red-400">
+                      <X className="w-4 h-4" />
+                    </button>
+                    <div className="grid grid-cols-2 gap-3 pr-6">
+                      <input placeholder="Option Name (e.g. Wood Choice)" value={opt.name} onChange={(e) => { const arr = [...form.customOptions]; arr[i].name = e.target.value; setForm({ ...form, customOptions: arr }); }} className={inputCls} />
+                      <select value={opt.type} onChange={(e) => { const arr = [...form.customOptions]; arr[i].type = e.target.value; setForm({ ...form, customOptions: arr }); }} className={inputCls}>
+                        <option value="text">Text Input</option>
+                        <option value="select">Dropdown Options</option>
+                      </select>
+                    </div>
+                    {opt.type === "select" && (
+                      <input placeholder="Choices (comma separated)" value={opt.choices} onChange={(e) => { const arr = [...form.customOptions]; arr[i].choices = e.target.value; setForm({ ...form, customOptions: arr }); }} className={inputCls} />
+                    )}
+                    <label className="flex items-center gap-2 text-xs text-[#8D6E63]">
+                      <input type="checkbox" checked={opt.required} onChange={(e) => { const arr = [...form.customOptions]; arr[i].required = e.target.checked; setForm({ ...form, customOptions: arr }); }} className="rounded border-[#2D1A0E] bg-[#0F0A05] text-[#C9A227] focus:ring-[#C9A227]" />
+                      Required field
+                    </label>
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-4 pt-4 pb-2 border-t border-[#2D1A0E]">
+                <div className="flex items-center justify-between">
+                  <label className="text-sm font-semibold tracking-widest uppercase text-[#F5F0EB]" style={{ fontFamily: "Cinzel, serif" }}>Volume Discounts</label>
+                  <button type="button" onClick={() => setForm({ ...form, volumeDiscounts: [...form.volumeDiscounts, { quantity: 2, pricePerUnit: parseFloat(form.price || "0") }] })} className="text-xs text-[#C9A227] hover:text-[#D4AF37] flex items-center gap-1">
+                    <Plus className="w-3 h-3" /> Add Discount
+                  </button>
+                </div>
+                {form.volumeDiscounts.map((vd, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <div className="flex-1 flex items-center gap-2">
+                      <span className="text-xs text-[#8D6E63]">Buy</span>
+                      <input type="number" min="2" value={vd.quantity} onChange={(e) => { const arr = [...form.volumeDiscounts]; arr[i].quantity = parseInt(e.target.value) || 2; setForm({ ...form, volumeDiscounts: arr }); }} className={inputCls} />
+                    </div>
+                    <div className="flex-1 flex items-center gap-2">
+                      <span className="text-xs text-[#8D6E63]">for $</span>
+                      <input type="number" step="0.01" min="0" value={vd.pricePerUnit} onChange={(e) => { const arr = [...form.volumeDiscounts]; arr[i].pricePerUnit = parseFloat(e.target.value) || 0; setForm({ ...form, volumeDiscounts: arr }); }} className={inputCls} placeholder="Price per unit" />
+                    </div>
+                    <span className="text-xs text-[#8D6E63]">each</span>
+                    <button type="button" onClick={() => setForm({ ...form, volumeDiscounts: form.volumeDiscounts.filter((_, idx) => idx !== i) })} className="text-[#8D6E63] hover:text-red-400 p-2">
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
               </div>
               <Field label="Description">
                 <textarea
