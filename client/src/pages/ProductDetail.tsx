@@ -1,6 +1,6 @@
 import { trpc } from "@/lib/trpc";
 import { useCart } from "@/contexts/CartContext";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams, Link } from "wouter";
 import { ArrowLeft, ShoppingBag, Clock, Check, ChevronLeft, ChevronRight, Star } from "lucide-react";
 import PublicLayout from "@/components/PublicLayout";
@@ -18,6 +18,18 @@ const CUSTOM_WOOD_OPTIONS = ["CHERRY", "WALNUT", "APRICOT", "MAPLE", "MIXED"];
 
 export default function ProductDetail() {
   const { slug } = useParams<{ slug: string }>();
+  const { data: product, isLoading } = trpc.products.bySlug.useQuery({ slug: slug ?? "" });
+  
+  const normalizedCustomOptions = useMemo(() => {
+    if (!product?.customOptions || !Array.isArray(product.customOptions)) return [];
+    return product.customOptions.map((opt: any) => ({
+      ...opt,
+      choices: typeof opt.choices === "string" 
+        ? opt.choices.split(",").map((c: string) => ({ label: c.trim() })).filter((c: any) => c.label) 
+        : opt.choices
+    }));
+  }, [product?.customOptions]);
+
   const { addItem } = useCart();
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
@@ -25,7 +37,6 @@ export default function ProductDetail() {
   const [selectedWood, setSelectedWood] = useState<string | null>(null);
   const [customSelections, setCustomSelections] = useState<Record<string, string>>({});
 
-  const { data: product, isLoading } = trpc.products.bySlug.useQuery({ slug: slug ?? "" });
   const { data: related } = trpc.products.list.useQuery(
     { category: product?.category, limit: 4 },
     { enabled: !!product }
@@ -43,8 +54,8 @@ export default function ProductDetail() {
         .find(d => quantity >= d.quantity);
       if (applicableDiscount) itemPrice = applicableDiscount.pricePerUnit;
     }
-    if (product.customOptions && Array.isArray(product.customOptions)) {
-      for (const opt of product.customOptions) {
+    if (normalizedCustomOptions.length > 0) {
+      for (const opt of normalizedCustomOptions) {
         if (opt.type === "select" && Array.isArray(opt.choices)) {
           const choice = opt.choices.find((c: any) => c.label === customSelections[opt.name]);
           if (choice && choice.priceOverride) itemPrice += choice.priceOverride;
@@ -204,8 +215,8 @@ export default function ProductDetail() {
                         .find(d => quantity >= d.quantity);
                       if (applicableDiscount) currentPrice = applicableDiscount.pricePerUnit;
                     }
-                    if (product.customOptions && Array.isArray(product.customOptions)) {
-                      for (const opt of product.customOptions) {
+                    if (normalizedCustomOptions.length > 0) {
+                      for (const opt of normalizedCustomOptions) {
                         if (opt.type === "select" && Array.isArray(opt.choices)) {
                           const choice = opt.choices.find((c: any) => c.label === customSelections[opt.name]);
                           if (choice && choice.priceOverride) currentPrice += choice.priceOverride;
@@ -283,9 +294,9 @@ export default function ProductDetail() {
                     </div>
                   )}
 
-                  {product.customOptions && Array.isArray(product.customOptions) && product.customOptions.length > 0 && (
+                  {normalizedCustomOptions.length > 0 && (
                     <div className="space-y-4">
-                      {product.customOptions.map((opt: any, i: number) => (
+                      {normalizedCustomOptions.map((opt: any, i: number) => (
                         <div key={i} className="space-y-2 p-4 bg-white border border-[#D7CCC8] rounded shadow-sm">
                           <label className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] flex justify-between items-center" style={{ fontFamily: "Inter, sans-serif" }}>
                             {opt.name}

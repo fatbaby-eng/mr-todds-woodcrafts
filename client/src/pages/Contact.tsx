@@ -64,8 +64,8 @@ export default function Contact() {
                       <p className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-0.5" style={{ fontFamily: "Inter, sans-serif" }}>
                         Email
                       </p>
-                      <a href="mailto:todd@mrtodds.com" className="text-sm text-[#3E2723] hover:text-[#C9A227] transition-colors" style={{ fontFamily: "Inter, sans-serif" }}>
-                        todd@mrtodds.com
+                      <a href="mailto:ToddBoswellArt@gmail.com" className="text-sm text-[#3E2723] hover:text-[#C9A227] transition-colors" style={{ fontFamily: "Inter, sans-serif" }}>
+                        ToddBoswellArt@gmail.com
                       </a>
                     </div>
                   </div>
