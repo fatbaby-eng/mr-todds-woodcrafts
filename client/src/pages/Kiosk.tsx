@@ -1,6 +1,6 @@
 import { trpc } from "@/lib/trpc";
 import { useState, useEffect, useCallback } from "react";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, ShoppingBag } from "lucide-react";
 import { Link } from "wouter";
 
 const SLIDE_DURATION = 6000; // ms per product
