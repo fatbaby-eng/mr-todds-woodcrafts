@@ -1,24 +1,9 @@
 import { trpc } from "@/lib/trpc";
-import { useState, useEffect, useCallback, useRef } from "react";
-import { ChevronLeft, ChevronRight, ShoppingBag, Maximize, Minimize, QrCode, X } from "lucide-react";
-import QRCodeLib from "qrcode";
+import { useState, useEffect, useCallback } from "react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { Link } from "wouter";
 
 const SLIDE_DURATION = 6000; // ms per product
-
-function QRCanvas({ url }: { url: string }) {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  useEffect(() => {
-    if (canvasRef.current) {
-      QRCodeLib.toCanvas(canvasRef.current, url, {
-        width: 160,
-        margin: 2,
-        color: { dark: "#3E2723", light: "#F5F0EB" },
-      }).catch(console.error);
-    }
-  }, [url]);
-  return <canvas ref={canvasRef} className="rounded mx-auto mb-4" />;
-}
 
 const WOOD_LABELS: Record<string, string> = {
   CHERRY: "Cherry", WALNUT: "Walnut", MAPLE: "Maple", MIXED: "Mixed Wood", OTHER: "Other",
@@ -37,10 +22,8 @@ export default function Kiosk() {
   const { data: shows } = trpc.tradeShows.list.useQuery({ activeOnly: true });
 
   const [current, setCurrent] = useState(0);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [paused, setPaused] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [showQR, setShowQR] = useState(false);
 
   const displayProducts = products ?? [];
   const currentShow = shows?.[0];
@@ -78,24 +61,13 @@ export default function Kiosk() {
       if (e.key === "ArrowRight") next();
       if (e.key === "ArrowLeft") prev();
       if (e.key === " ") setPaused((p) => !p);
-      if (e.key === "Escape") setIsFullscreen(false);
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [next, prev]);
 
-  const toggleFullscreen = () => {
-    if (!isFullscreen) {
-      document.documentElement.requestFullscreen?.();
-    } else {
-      document.exitFullscreen?.();
-    }
-    setIsFullscreen(!isFullscreen);
-  };
-
   const product = displayProducts[current];
   const images: string[] = Array.isArray(product?.images) ? product.images : [];
-  const shopUrl = typeof window !== "undefined" ? `${window.location.origin}/shop` : "";
 
   return (
     <div
@@ -159,10 +131,10 @@ export default function Kiosk() {
               </h2>
               {product.description && (
                 <p
-                  className="text-[#8D6E63] text-lg leading-relaxed mb-8 max-w-md"
+                  className="text-[#8D6E63] text-lg leading-relaxed mb-8 max-w-md line-clamp-3"
                   style={{ fontFamily: "Lora, serif" }}
                 >
-                  {product.description.slice(0, 160)}{product.description.length > 160 ? "…" : ""}
+                  {product.description.replace(/<[^>]*>?/gm, '')}
                 </p>
               )}
               <div className="flex items-center gap-6">
@@ -268,25 +240,11 @@ export default function Kiosk() {
       <div className="absolute top-6 right-6 flex items-center gap-3">
         <Link 
           href="/"
-          className="w-10 h-10 rounded-full bg-[#2D1A0E]/80 backdrop-blur-sm flex items-center justify-center text-[#8D6E63] hover:text-red-400 transition-colors"
+          className="w-10 h-10 rounded-full bg-[#2D1A0E]/80 backdrop-blur-sm flex items-center justify-center text-[#8D6E63] hover:text-[#F5F0EB] transition-colors"
           title="Exit Kiosk"
         >
           <X className="w-5 h-5" />
         </Link>
-        <button
-          onClick={() => setShowQR(!showQR)}
-          className="w-10 h-10 rounded-full bg-[#2D1A0E]/80 backdrop-blur-sm flex items-center justify-center text-[#8D6E63] hover:text-[#C9A227] transition-colors"
-          title="Show QR code"
-        >
-          <QrCode className="w-5 h-5" />
-        </button>
-        <button
-          onClick={toggleFullscreen}
-          className="w-10 h-10 rounded-full bg-[#2D1A0E]/80 backdrop-blur-sm flex items-center justify-center text-[#8D6E63] hover:text-[#C9A227] transition-colors"
-          title={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-        >
-          {isFullscreen ? <Minimize className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
-        </button>
       </div>
 
       {/* Nav arrows */}
@@ -302,31 +260,6 @@ export default function Kiosk() {
       >
         <ChevronRight className="w-6 h-6" />
       </button>
-
-      {/* QR Overlay */}
-      {showQR && (
-        <div className="absolute inset-0 z-20 bg-black/70 flex items-center justify-center" onClick={() => setShowQR(false)}>
-          <div className="bg-[#F5F0EB] rounded-2xl p-8 text-center max-w-xs" onClick={(e) => e.stopPropagation()}>
-            <h3 className="font-cinzel text-[#3E2723] text-xl mb-2" style={{ fontFamily: "Cinzel, serif" }}>
-              Shop Online
-            </h3>
-            <p className="text-sm text-[#8D6E63] mb-4" style={{ fontFamily: "Inter, sans-serif" }}>
-              Scan to browse the full collection
-            </p>
-            <QRCanvas url={shopUrl} />
-            <p className="text-xs text-[#8D6E63] font-mono break-all" style={{ fontFamily: "Inter, sans-serif" }}>
-              {shopUrl}
-            </p>
-            <button
-              onClick={() => setShowQR(false)}
-              className="mt-4 text-xs text-[#8D6E63] hover:text-[#3E2723]"
-              style={{ fontFamily: "Inter, sans-serif" }}
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Keyboard hint */}
       <div className="absolute bottom-8 right-6 text-xs text-[#5D4037]" style={{ fontFamily: "Inter, sans-serif" }}>
