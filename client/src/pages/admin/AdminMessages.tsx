@@ -1,6 +1,6 @@
 import { trpc } from "@/lib/trpc";
 import { useState } from "react";
-import DashboardLayout from "@/components/DashboardLayout";
+import AdminLayout from "./AdminLayout";
 import { format } from "date-fns";
 import { Mail, MailOpen, Archive, Check } from "lucide-react";
 import { toast } from "sonner";
@@ -17,7 +17,7 @@ export default function AdminMessages() {
   };
 
   return (
-    <DashboardLayout>
+    <AdminLayout>
       <div className="flex justify-between items-end mb-8">
         <div>
           <h1 className="text-2xl font-cinzel text-[#F5F0EB] mb-2" style={{ fontFamily: "Cinzel, serif" }}>Inbox</h1>
@@ -84,6 +84,6 @@ export default function AdminMessages() {
           </tbody>
         </table>
       </div>
-    </DashboardLayout>
+    </AdminLayout>
   );
 }

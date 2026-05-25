@@ -172,7 +172,7 @@ export default function AdminShows() {
                 <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
                   placeholder="Nebraska Craft Fair" className={inputCls} style={{ fontFamily: "Inter, sans-serif" }} />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-1.5" style={{ fontFamily: "Inter, sans-serif" }}>Start Date *</label>
                   <input required type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })}

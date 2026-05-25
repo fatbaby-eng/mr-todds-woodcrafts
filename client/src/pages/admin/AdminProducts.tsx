@@ -291,7 +291,7 @@ export default function AdminProducts() {
               </button>
             </div>
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Field label="Product Name *">
                   <input
                     required value={form.name}
@@ -319,7 +319,7 @@ export default function AdminProducts() {
                     <button type="button" onClick={() => setForm({ ...form, customOptions: form.customOptions.filter((_, idx) => idx !== i) })} className="absolute top-2 right-2 text-[#8D6E63] hover:text-red-400">
                       <X className="w-4 h-4" />
                     </button>
-                    <div className="grid grid-cols-2 gap-3 pr-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pr-6">
                       <input placeholder="Option Name (e.g. Wood Choice)" value={opt.name} onChange={(e) => { const arr = [...form.customOptions]; arr[i].name = e.target.value; setForm({ ...form, customOptions: arr }); }} className={inputCls} />
                       <select value={opt.type} onChange={(e) => { const arr = [...form.customOptions]; arr[i].type = e.target.value; setForm({ ...form, customOptions: arr }); }} className={inputCls}>
                         <option value="text">Text Input</option>
@@ -368,7 +368,7 @@ export default function AdminProducts() {
                   className={`${inputCls} resize-none font-mono`} style={{ fontFamily: "Inter, sans-serif" }}
                 />
               </Field>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Field label="Price (USD) *">
                   <input
                     required type="number" step="0.01" min="0" value={form.price}
@@ -384,7 +384,7 @@ export default function AdminProducts() {
                   />
                 </Field>
               </div>
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <Field label="Wood Type">
                   <select value={form.woodType} onChange={(e) => setForm({ ...form, woodType: e.target.value as typeof WOOD_TYPES[number] })}
                     className={`${inputCls} bg-[#0F0A05]`} style={{ fontFamily: "Inter, sans-serif" }}>
@@ -404,7 +404,7 @@ export default function AdminProducts() {
                   </select>
                 </Field>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Field label="Lead Time (days)">
                   <input
                     type="number" min="0" value={form.leadTimeDays}

@@ -269,7 +269,7 @@ export default function AdminInventory() {
               </button>
             </div>
             <form onSubmit={handleBlankSubmit} className="p-6 space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-1.5" style={{ fontFamily: "Inter, sans-serif" }}>Wood Type *</label>
                   <select value={blankForm.woodType} onChange={(e) => setBlankForm({ ...blankForm, woodType: e.target.value as typeof WOOD_TYPES[number] })}
@@ -290,7 +290,7 @@ export default function AdminInventory() {
                 <input value={blankForm.dimensions} onChange={(e) => setBlankForm({ ...blankForm, dimensions: e.target.value })}
                   placeholder='e.g. 14" × 3" × 1.5"' className={inputCls} style={{ fontFamily: "Inter, sans-serif" }} />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-1.5" style={{ fontFamily: "Inter, sans-serif" }}>Source</label>
                   <input value={blankForm.source} onChange={(e) => setBlankForm({ ...blankForm, source: e.target.value })}

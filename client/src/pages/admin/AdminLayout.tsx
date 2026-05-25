@@ -2,7 +2,7 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Link, useLocation } from "wouter";
 import {
   LayoutDashboard, Package, ShoppingCart, Layers, CalendarDays,
-  Users, LogOut, Menu, X, ChevronRight, AlertTriangle,
+  Users, LogOut, Menu, X, ChevronRight, AlertTriangle, MessageSquare
 } from "lucide-react";
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
@@ -13,6 +13,7 @@ const NAV = [
   { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
   { href: "/admin/inventory", label: "Inventory", icon: Layers },
+  { href: "/admin/messages", label: "Inbox", icon: MessageSquare },
   { href: "/admin/shows", label: "Trade Shows", icon: CalendarDays },
   { href: "/admin/subscribers", label: "Subscribers", icon: Users },
 ];
@@ -193,7 +194,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             Admin Panel
           </span>
         </div>
-        <main className="flex-1 overflow-auto p-6">
+        <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8">
           {children}
         </main>
       </div>
