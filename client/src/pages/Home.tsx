@@ -42,16 +42,10 @@ export default function Home() {
             <span className="text-[#C9A227]">Workshop</span>
           </h1>
           <p
-            className="text-[#D7CCC8] text-lg md:text-xl max-w-2xl mx-auto mb-3 leading-relaxed"
+            className="text-[#D7CCC8] text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed"
             style={{ fontFamily: "Lora, serif" }}
           >
             Measured in Grain and Grace.
-          </p>
-          <p
-            className="text-[#C9A227] text-sm tracking-[0.2em] uppercase mb-10"
-            style={{ fontFamily: "Inter, sans-serif" }}
-          >
-            Measured in Grain and Grace
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
