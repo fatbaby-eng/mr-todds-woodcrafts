@@ -223,7 +223,7 @@ export default function Kiosk() {
 
       {/* Slide dots */}
       {displayProducts.length > 1 && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
+        <div className="absolute z-50 bottom-6 left-1/2 -translate-x-1/2 flex gap-2">
           {displayProducts.map((_, i) => (
             <button
               key={i}
@@ -237,7 +237,7 @@ export default function Kiosk() {
       )}
 
       {/* Controls */}
-      <div className="absolute top-6 right-6 flex items-center gap-3">
+      <div className="absolute z-50 top-6 right-6 flex items-center gap-3">
         <Link 
           href="/"
           className="w-10 h-10 rounded-full bg-[#2D1A0E]/80 backdrop-blur-sm flex items-center justify-center text-[#8D6E63] hover:text-[#F5F0EB] transition-colors"
@@ -250,13 +250,13 @@ export default function Kiosk() {
       {/* Nav arrows */}
       <button
         onClick={prev}
-        className="absolute left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-[#2D1A0E]/80 backdrop-blur-sm flex items-center justify-center text-[#8D6E63] hover:text-[#F5F0EB] hover:bg-[#5D4037]/80 transition-colors"
+        className="absolute z-50 left-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-[#2D1A0E]/80 backdrop-blur-sm flex items-center justify-center text-[#8D6E63] hover:text-[#F5F0EB] hover:bg-[#5D4037]/80 transition-colors"
       >
         <ChevronLeft className="w-6 h-6" />
       </button>
       <button
         onClick={next}
-        className="absolute right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-[#2D1A0E]/80 backdrop-blur-sm flex items-center justify-center text-[#8D6E63] hover:text-[#F5F0EB] hover:bg-[#5D4037]/80 transition-colors"
+        className="absolute z-50 right-4 top-1/2 -translate-y-1/2 w-12 h-12 rounded-full bg-[#2D1A0E]/80 backdrop-blur-sm flex items-center justify-center text-[#8D6E63] hover:text-[#F5F0EB] hover:bg-[#5D4037]/80 transition-colors"
       >
         <ChevronRight className="w-6 h-6" />
       </button>
