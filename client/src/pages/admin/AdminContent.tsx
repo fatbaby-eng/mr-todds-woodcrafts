@@ -37,7 +37,6 @@ export default function AdminContent() {
       await updateMutation.mutateAsync({ key, value });
       toast.success("Content updated successfully");
       refetch();
-      };
     } catch (err: any) {
       toast.error(err.message || "Failed to update content");
     }
