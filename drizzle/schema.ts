@@ -190,3 +190,18 @@ export const cartSessions = mysqlTable("cart_sessions", {
 
 export type CartSession = typeof cartSessions.$inferSelect;
 export type InsertCartSession = typeof cartSessions.$inferInsert;
+
+// ─── Site Content (CMS) ────────────────────────────────────────────────────────
+export const siteContent = mysqlTable("site_content", {
+  id: int("id").autoincrement().primaryKey(),
+  key: varchar("key", { length: 255 }).notNull().unique(),
+  value: text("value"),
+  label: varchar("label", { length: 255 }).notNull(),
+  category: varchar("category", { length: 255 }).notNull(),
+  type: mysqlEnum("type", ["text", "textarea", "image", "color"]).notNull().default("text"),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type SiteContent = typeof siteContent.$inferSelect;
+export type InsertSiteContent = typeof siteContent.$inferInsert;
+

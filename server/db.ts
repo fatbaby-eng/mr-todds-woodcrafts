@@ -11,6 +11,7 @@ import {
   users,
   woodBlanks,
   contactMessages,
+  siteContent,
   type InsertProduct,
   type InsertOrder,
   type InsertOrderItem,
@@ -19,6 +20,7 @@ import {
   type InsertSubscriber,
   type InsertCartSession,
   type InsertContactMessage,
+  type InsertSiteContent,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -348,4 +350,55 @@ export async function getDashboardStats() {
     lowStockProducts: lowStock,
     totalRevenue: revenueResult?.total ?? 0,
   };
+}
+
+// ─── Site Content (CMS) ────────────────────────────────────────────────────────
+
+export async function getAllSiteContent() {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  return await db.select().from(siteContent);
+}
+
+export async function updateSiteContent(key: string, value: string) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  
+  await db
+    .update(siteContent)
+    .set({ value })
+    .where(eq(siteContent.key, key));
+}
+
+export async function seedSiteContent() {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+
+  const existing = await db.select().from(siteContent);
+  if (existing.length > 0) return;
+
+  const defaultContent: InsertSiteContent[] = [
+    // General
+    { key: "site_title", label: "Site Title", value: "Mr. Todd's Woodcrafts", category: "General", type: "text" },
+    { key: "theme_color_primary", label: "Primary Theme Color (Gold)", value: "#C9A227", category: "General", type: "color" },
+    { key: "theme_color_bg", label: "Dark Background Color", value: "#1A1A1A", category: "General", type: "color" },
+    { key: "theme_color_text", label: "Light Text Color", value: "#F5F0EB", category: "General", type: "color" },
+    { key: "logo_url", label: "Logo Image URL", value: "/mrtodd-logo.jpg", category: "General", type: "image" },
+    // Home
+    { key: "hero_subtitle", label: "Hero Subtitle", value: "Handcrafted in Omaha, Nebraska", category: "Home", type: "text" },
+    { key: "hero_title", label: "Hero Main Title", value: "Mr. Todd's Workshop", category: "Home", type: "text" },
+    { key: "hero_tagline", label: "Hero Tagline", value: "Measured in Grain and Grace.", category: "Home", type: "text" },
+    { key: "home_about_title", label: "Home About Title", value: "Generations of Craft", category: "Home", type: "text" },
+    { key: "home_about_text", label: "Home About Text", value: "Every spoon, knife, and board is carved with precision and care, honoring the natural beauty of the wood.", category: "Home", type: "textarea" },
+    { key: "home_about_image", label: "Home About Image", value: "/mrtodd-logo.jpg", category: "Home", type: "image" },
+    // About
+    { key: "about_story_title", label: "Our Story Title", value: "The Craft Behind the Grain", category: "About", type: "text" },
+    { key: "about_story_text", label: "Our Story Text", value: "Mr. Todd has been crafting fine wooden utensils for over 20 years. It all started in a small garage...", category: "About", type: "textarea" },
+    { key: "about_story_image", label: "Our Story Image", value: "/mrtodd-logo.jpg", category: "About", type: "image" },
+    // Contact
+    { key: "contact_email", label: "Contact Email", value: "hello@mrtoddsworkshop.com", category: "Contact", type: "text" },
+    { key: "contact_text", label: "Contact Description", value: "Have a question or custom request? Reach out to us below.", category: "Contact", type: "textarea" },
+  ];
+
+  await db.insert(siteContent).values(defaultContent);
 }

@@ -38,6 +38,8 @@ import {
   createContactMessage,
   updateContactMessageStatus,
   deleteContactMessage,
+  getAllSiteContent,
+  updateSiteContent,
 } from "./db";
 import { sendEmail } from "./email";
 import { storagePut } from "./storage";
@@ -528,6 +530,26 @@ export const appRouter = router({
         return { success: true };
       }),
   }),
+
+  // ─── Site Content (CMS) ───────────────────────────────────────────────────
+  siteContent: router({
+    getAll: publicProcedure.query(async () => {
+      return await getAllSiteContent();
+    }),
+
+    update: adminProcedure
+      .input(
+        z.object({
+          key: z.string(),
+          value: z.string(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        await updateSiteContent(input.key, input.value);
+        return { success: true };
+      }),
+  }),
+
   // ─── Admin Dashboard ──────────────────────────────────────────────────────
   admin: router({
     stats: adminProcedure.query(() => getDashboardStats()),

@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { ArrowRight } from "lucide-react";
 import PublicLayout from "@/components/PublicLayout";
+import { useSiteContent } from "@/hooks/useSiteContent";
 
 const ABOUT_IMAGE = "https://d2xsxph8kpxj0f.cloudfront.net/310519663636425749/NnkxhKXWD7fvxT2jVUmqJK/about-workshop-mDbzEm83VeFf26wFs83pMw.webp";
 const PROCESS_IMAGE = "https://d2xsxph8kpxj0f.cloudfront.net/310519663636425749/NnkxhKXWD7fvxT2jVUmqJK/process-banner-NRWk3kcMe7ZBPpmt2FU9ag.webp";
@@ -55,32 +56,18 @@ export default function About() {
         <div className="container">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div>
-              <p className="text-[#C9A227] text-xs tracking-[0.3em] uppercase mb-4" style={{ fontFamily: "Inter, sans-serif" }}>
+              <p className="text-[var(--theme-primary,#C9A227)] text-xs tracking-[0.3em] uppercase mb-4" style={{ fontFamily: "Inter, sans-serif" }}>
                 The Beginning
               </p>
               <h2
-                className="text-[#3E2723] text-3xl font-cinzel mb-6 leading-tight"
+                className="text-[var(--theme-bg,#3E2723)] text-3xl font-cinzel mb-6 leading-tight whitespace-pre-wrap"
                 style={{ fontFamily: "Cinzel, serif" }}
               >
-                Started with
-                <br />
-                Four Trees
+                {content.about_story_title || "Started with\nFour Trees"}
               </h2>
-              <div className="space-y-4 text-[#5D4037]" style={{ fontFamily: "Lora, serif" }}>
+              <div className="space-y-4 text-[var(--theme-bg,#5D4037)] opacity-90 whitespace-pre-wrap" style={{ fontFamily: "Lora, serif" }}>
                 <p className="leading-relaxed">
-                  Mr. Todd's Workshop started with trees that died in a yard in southeast Omaha. Two cherry and two apricot, planted by my mother-in-law about 35 years ago, taken down slowly by a nearby walnut. When the trees finally came down I could not bring myself to haul the wood off as firewood.
-                </p>
-                <p className="leading-relaxed">
-                  I have cut down three of the four. The last apricot is still standing, dead, waiting.
-                </p>
-                <p className="leading-relaxed">
-                  The first piece was a cane for her. The second was a baby toy. After that the work just kept going.
-                </p>
-                <p className="leading-relaxed text-[#8D6E63]">
-                  Hand tools mostly. Food-safe oil finishes. The grain decides as much as the maker does. No two pieces come out the same, and they aren't meant to be.
-                </p>
-                <p className="leading-relaxed text-[#8D6E63]">
-                  Run out of a workshop in Omaha, Nebraska, by Todd Boswell. Designer by trade, carver by accident.
+                  {content.about_story_text || "Mr. Todd's Workshop started with trees that died in a yard in southeast Omaha. Two cherry and two apricot, planted by my mother-in-law about 35 years ago, taken down slowly by a nearby walnut."}
                 </p>
               </div>
             </div>

@@ -24,11 +24,26 @@ import AdminInventory from "./pages/admin/AdminInventory";
 import AdminShows from "@/pages/admin/AdminShows";
 import AdminSubscribers from "@/pages/admin/AdminSubscribers";
 import AdminMessages from "@/pages/admin/AdminMessages";
+import AdminContent from "@/pages/admin/AdminContent";
 
 // Kiosk
 import Kiosk from "./pages/Kiosk";
 
+import { useSiteContent } from "./hooks/useSiteContent";
+import { useEffect } from "react";
+
 function Router() {
+  const { content, isLoading } = useSiteContent();
+
+  useEffect(() => {
+    if (content) {
+      const root = document.documentElement;
+      if (content.theme_color_primary) root.style.setProperty("--theme-primary", content.theme_color_primary);
+      if (content.theme_color_bg) root.style.setProperty("--theme-bg", content.theme_color_bg);
+      if (content.theme_color_text) root.style.setProperty("--theme-text", content.theme_color_text);
+    }
+  }, [content]);
+
   return (
     <>
       <ScrollToTop />
@@ -50,6 +65,7 @@ function Router() {
       <Route path="/admin/shows" component={AdminShows} />
       <Route path="/admin/subscribers" component={AdminSubscribers} />
       <Route path="/admin/messages" component={AdminMessages} />
+      <Route path="/admin/content" component={AdminContent} />
 
       {/* Kiosk / Trade-show display */}
       <Route path="/kiosk" component={Kiosk} />

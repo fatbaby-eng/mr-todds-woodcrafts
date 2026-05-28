@@ -3,8 +3,10 @@ import { useState } from "react";
 import { Mail, MapPin, Clock, Send, Check } from "lucide-react";
 import PublicLayout from "@/components/PublicLayout";
 import { toast } from "sonner";
+import { useSiteContent } from "@/hooks/useSiteContent";
 
 export default function Contact() {
+  const { content } = useSiteContent();
   const [form, setForm] = useState({
     name: "", email: "", subject: "general", message: "",
   });
@@ -40,7 +42,7 @@ export default function Contact() {
             Contact
           </h1>
           <p className="text-[#8D6E63] mt-4 max-w-md mx-auto" style={{ fontFamily: "Lora, serif" }}>
-            Questions about a piece, custom orders, wholesale inquiries — Todd reads every message.
+            {content.contact_text || "Questions about a piece, custom orders, wholesale inquiries — Todd reads every message."}
           </p>
         </div>
       </div>
@@ -64,8 +66,8 @@ export default function Contact() {
                       <p className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-0.5" style={{ fontFamily: "Inter, sans-serif" }}>
                         Email
                       </p>
-                      <a href="mailto:ToddBoswellArt@gmail.com" className="text-sm text-[#3E2723] hover:text-[#C9A227] transition-colors" style={{ fontFamily: "Inter, sans-serif" }}>
-                        ToddBoswellArt@gmail.com
+                      <a href={`mailto:${content.contact_email || "ToddBoswellArt@gmail.com"}`} className="text-sm text-[#3E2723] hover:text-[#C9A227] transition-colors" style={{ fontFamily: "Inter, sans-serif" }}>
+                        {content.contact_email || "ToddBoswellArt@gmail.com"}
                       </a>
                     </div>
                   </div>

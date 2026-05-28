@@ -3,11 +3,13 @@ import { Link } from "wouter";
 import { ArrowRight, ChevronDown, Truck, MapPin, Calendar } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import PublicLayout from "@/components/PublicLayout";
+import { useSiteContent } from "@/hooks/useSiteContent";
 
 const HERO_IMAGE = "https://d2xsxph8kpxj0f.cloudfront.net/310519663636425749/NnkxhKXWD7fvxT2jVUmqJK/hero-workshop-KY7LMQoA4LrMirx4g7bW3D.webp";
 const ABOUT_IMAGE = "https://d2xsxph8kpxj0f.cloudfront.net/310519663636425749/NnkxhKXWD7fvxT2jVUmqJK/about-workshop-mDbzEm83VeFf26wFs83pMw.webp";
 
 export default function Home() {
+  const { content } = useSiteContent();
   const { data: featuredProducts, isLoading } = trpc.products.list.useQuery({ featured: true, limit: 6 });
   const { data: upcomingShows, isLoading: isLoadingShows } = trpc.tradeShows.list.useQuery({ activeOnly: true });
 
@@ -28,24 +30,22 @@ export default function Home() {
         {/* Content */}
         <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
           <p
-            className="text-[#C9A227] text-xs tracking-[0.4em] uppercase mb-6"
+            className="text-[var(--theme-primary,#C9A227)] text-xs tracking-[0.4em] uppercase mb-6"
             style={{ fontFamily: "Inter, sans-serif" }}
           >
-            Handcrafted in Omaha, Nebraska
+            {content.hero_subtitle || "Handcrafted in Omaha, Nebraska"}
           </p>
           <h1
-            className="text-[#F5F0EB] text-5xl md:text-7xl lg:text-8xl font-cinzel font-semibold leading-tight mb-6"
+            className="text-[var(--theme-text,#F5F0EB)] text-5xl md:text-7xl lg:text-8xl font-cinzel font-semibold leading-tight mb-6"
             style={{ fontFamily: "Cinzel, serif", textShadow: "0 2px 20px rgba(0,0,0,0.5)" }}
           >
-            Mr. Todd's
-            <br />
-            <span className="text-[#C9A227]">Workshop</span>
+            {content.hero_title || "Mr. Todd's Workshop"}
           </h1>
           <p
-            className="text-[#D7CCC8] text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed"
+            className="text-[var(--theme-text,#D7CCC8)] text-lg md:text-xl max-w-2xl mx-auto mb-10 leading-relaxed opacity-90"
             style={{ fontFamily: "Lora, serif" }}
           >
-            Measured in Grain and Grace.
+            {content.hero_tagline || "Measured in Grain and Grace."}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
@@ -185,42 +185,30 @@ export default function Home() {
       )}
 
       {/* ─── Brand Story ─────────────────────────────────────────────────── */}
-      <section className="py-20 bg-[#3E2723]">
+      <section className="py-20 bg-[var(--theme-bg,#3E2723)]">
         <div className="container">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="relative">
-              {/* TODO: replace with real workshop photo */}
               <img
-                src={ABOUT_IMAGE}
-                alt="Todd's workshop"
+                src={content.home_about_image || ABOUT_IMAGE}
+                alt="Workshop"
                 className="w-full rounded-lg shadow-2xl object-cover aspect-[4/3]"
               />
-              <div className="absolute -bottom-4 -right-4 w-24 h-24 border-4 border-[#C9A227] rounded-lg hidden lg:block" />
+              <div className="absolute -bottom-4 -right-4 w-24 h-24 border-4 border-[var(--theme-primary,#C9A227)] rounded-lg hidden lg:block" />
             </div>
             <div>
-              <p className="text-[#C9A227] text-xs tracking-[0.3em] uppercase mb-4" style={{ fontFamily: "Inter, sans-serif" }}>
+              <p className="text-[var(--theme-primary,#C9A227)] text-xs tracking-[0.3em] uppercase mb-4" style={{ fontFamily: "Inter, sans-serif" }}>
                 The Maker
               </p>
               <h2
-                className="text-[#F5F0EB] text-3xl md:text-4xl font-cinzel mb-6 leading-tight"
+                className="text-[var(--theme-text,#F5F0EB)] text-3xl md:text-4xl font-cinzel mb-6 leading-tight"
                 style={{ fontFamily: "Cinzel, serif" }}
               >
-                Started with
-                <br />
-                <span className="text-[#C9A227]">Four Trees</span>
+                {content.home_about_title || "Generations of Craft"}
               </h2>
-              <div className="space-y-4 text-[#D7CCC8]" style={{ fontFamily: "Lora, serif" }}>
+              <div className="space-y-4 text-[var(--theme-text,#D7CCC8)] opacity-90 whitespace-pre-wrap" style={{ fontFamily: "Lora, serif" }}>
                 <p className="leading-relaxed">
-                  Mr. Todd's Workshop started with trees that died in a yard in southeast Omaha. Two cherry and two apricot, planted by my mother-in-law about 35 years ago, taken down slowly by a nearby walnut. When the trees finally came down I could not bring myself to haul the wood off as firewood.
-                </p>
-                <p className="leading-relaxed">
-                  I have cut down three of the four. The last apricot is still standing, dead, waiting.
-                </p>
-                <p className="leading-relaxed">
-                  The first piece was a cane for her. The second was a baby toy. After that the work just kept going.
-                </p>
-                <p className="leading-relaxed text-[#8D6E63]">
-                  Hand tools mostly. Food-safe oil finishes. The grain decides as much as the maker does. No two pieces come out the same, and they aren't meant to be.
+                  {content.home_about_text || "Every spoon, knife, and board is carved with precision and care, honoring the natural beauty of the wood."}
                 </p>
               </div>
               <Link

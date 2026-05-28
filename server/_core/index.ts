@@ -10,6 +10,7 @@ import { registerAdminAuthRoutes, ensureAdminUser } from "./adminAuth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
+import { seedSiteContent } from "../db";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -41,6 +42,10 @@ async function startServer() {
   
   await ensureAdminUser().catch((err) => {
     console.warn("[Admin] Failed to ensure admin user:", err);
+  });
+
+  await seedSiteContent().catch((err) => {
+    console.warn("[Admin] Failed to seed site content:", err);
   });
   
   // Serve local uploads folder
