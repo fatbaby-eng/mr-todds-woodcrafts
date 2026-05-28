@@ -30,6 +30,8 @@ const VALUES = [
 ];
 
 export default function About() {
+  const { content } = useSiteContent();
+
   return (
     <PublicLayout>
       {/* Header */}
