@@ -1,13 +1,18 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { Save, Loader2, Image as ImageIcon } from "lucide-react";
+import { Save, Loader2, Image as ImageIcon, Upload } from "lucide-react";
+import AdminLayout from "./AdminLayout";
+import { useRef, useState as useReactState } from "react";
 
 export default function AdminContent() {
   const [activeTab, setActiveTab] = useState("General");
   const { data: content, isLoading, refetch } = trpc.siteContent.getAll.useQuery();
   const updateMutation = trpc.siteContent.update.useMutation();
+  const uploadImage = trpc.products.uploadImage.useMutation();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingChanges, setPendingChanges] = useState<Record<string, string>>({});
+  const [uploadingField, setUploadingField] = useState<string | null>(null);
 
   if (isLoading) {
     return (
@@ -32,13 +37,38 @@ export default function AdminContent() {
       await updateMutation.mutateAsync({ key, value });
       toast.success("Content updated successfully");
       refetch();
+      };
     } catch (err: any) {
       toast.error(err.message || "Failed to update content");
     }
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, key: string) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingField(key);
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const { url } = await uploadImage.mutateAsync({ filename: file.name, contentType: file.type, dataUrl });
+      
+      handleValueChange(key, url);
+      toast.success("Image uploaded!");
+    } catch {
+      toast.error("Failed to upload image.");
+    } finally {
+      setUploadingField(null);
+      if (e.target) e.target.value = "";
+    }
+  };
+
   return (
-    <div>
+    <AdminLayout>
       <h1 className="font-cinzel text-[#F5F0EB] text-3xl mb-8" style={{ fontFamily: "Cinzel, serif" }}>
         Content Manager
       </h1>
@@ -134,8 +164,26 @@ export default function AdminContent() {
                       value={currentValue}
                       onChange={(e) => handleValueChange(field.key, e.target.value)}
                       placeholder="/uploads/my-image.jpg or https://..."
-                      className="w-full bg-[#1A1008] border border-[#2D1A0E] text-[#D7CCC8] p-3 rounded focus:outline-none focus:border-[#C9A227] transition-colors font-mono text-sm"
+                      className="w-full bg-[#1A1008] border border-[#2D1A0E] text-[#D7CCC8] p-3 rounded focus:outline-none focus:border-[#C9A227] transition-colors font-mono text-sm mb-2"
                     />
+                    <div className="flex items-center gap-2">
+                      <input 
+                        id={`file-${field.key}`}
+                        type="file" 
+                        accept="image/*" 
+                        className="hidden" 
+                        onChange={(e) => handleImageUpload(e, field.key)} 
+                      />
+                      <button 
+                        type="button" 
+                        onClick={() => document.getElementById(`file-${field.key}`)?.click()} 
+                        disabled={uploadingField === field.key}
+                        className="flex items-center gap-2 px-3 py-2 rounded text-xs bg-[#3E2723] text-[#D7CCC8] hover:bg-[#5D4037] disabled:opacity-50"
+                      >
+                        {uploadingField === field.key ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
+                        {uploadingField === field.key ? "Uploading…" : "Upload New Image"}
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -143,6 +191,6 @@ export default function AdminContent() {
           );
         })}
       </div>
-    </div>
+    </AdminLayout>
   );
 }
