@@ -300,6 +300,12 @@ export async function updateContactMessageStatus(id: number, status: "unread" | 
   await db.update(contactMessages).set({ status }).where(eq(contactMessages.id, id));
 }
 
+export async function deleteContactMessage(id: number) {
+  const db = await getDb();
+  if (!db) throw new Error("DB unavailable");
+  await db.delete(contactMessages).where(eq(contactMessages.id, id));
+}
+
 // ─── Cart Sessions ────────────────────────────────────────────────────────────
 export async function getCartSession(sessionId: string) {
   const db = await getDb();

@@ -37,7 +37,9 @@ import {
   getContactMessages,
   createContactMessage,
   updateContactMessageStatus,
+  deleteContactMessage,
 } from "./db";
+import { sendEmail } from "./email";
 import { storagePut } from "./storage";
 
 // ─── Admin guard ──────────────────────────────────────────────────────────────
@@ -456,6 +458,34 @@ export const appRouter = router({
       }))
       .mutation(async ({ input }) => {
         await updateContactMessageStatus(input.id, input.status);
+        return { success: true };
+      }),
+
+    delete: adminProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await deleteContactMessage(input.id);
+        return { success: true };
+      }),
+
+    reply: adminProcedure
+      .input(z.object({
+        id: z.number(),
+        to: z.string().email(),
+        subject: z.string(),
+        body: z.string().min(1),
+      }))
+      .mutation(async ({ input }) => {
+        // Send the email
+        await sendEmail({
+          to: input.to,
+          subject: input.subject,
+          text: input.body,
+        });
+
+        // Automatically mark as read if we replied to it
+        await updateContactMessageStatus(input.id, "read");
+        
         return { success: true };
       }),
   }),
