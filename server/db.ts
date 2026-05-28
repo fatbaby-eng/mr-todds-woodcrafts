@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, like, sql } from "drizzle-orm";
+import { and, or, asc, desc, eq, like, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser,

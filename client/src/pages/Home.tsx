@@ -33,6 +33,11 @@ export default function Home() {
           >
             Handcrafted in Omaha, Nebraska
           </p>
+          <img 
+            src="/mrtodd-logo.jpg" 
+            alt="Mr. Todd's Workshop" 
+            className="w-32 h-32 md:w-40 md:h-40 mx-auto mb-6 rounded-full border-4 border-[#C9A227]/80 shadow-2xl object-cover" 
+          />
           <h1
             className="text-[#F5F0EB] text-5xl md:text-7xl lg:text-8xl font-cinzel font-semibold leading-tight mb-6"
             style={{ fontFamily: "Cinzel, serif", textShadow: "0 2px 20px rgba(0,0,0,0.5)" }}

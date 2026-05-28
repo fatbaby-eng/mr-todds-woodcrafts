@@ -35,6 +35,7 @@ export default function Checkout() {
   const [, navigate] = useLocation();
   const [step, setStep] = useState<Step>("info");
   const [orderNumber, setOrderNumber] = useState<string | null>(null);
+  const [finalTotal, setFinalTotal] = useState<number | null>(null);
 
   const [customer, setCustomer] = useState<CustomerInfo>({
     firstName: "", lastName: "", email: "", phone: "",
@@ -61,6 +62,7 @@ export default function Checkout() {
   });
 
   const handlePlaceOrder = () => {
+    setFinalTotal(total);
     placeOrder.mutate({
       customerEmail: customer.email,
       customerName: `${customer.firstName} ${customer.lastName}`,
@@ -104,9 +106,11 @@ export default function Checkout() {
 
   // ─── Order Confirmation ────────────────────────────────────────────────────
   if (step === "review" && orderNumber) {
+    const paymentAmount = finalTotal ?? 0;
+    
     return (
       <div className="min-h-screen bg-[#F5F0EB] flex items-center justify-center px-4">
-        <div className="max-w-lg w-full text-center">
+        <div className="max-w-lg w-full text-center py-10">
           <div className="w-20 h-20 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-6">
             <Check className="w-10 h-10 text-emerald-600" />
           </div>
@@ -114,11 +118,36 @@ export default function Checkout() {
             className="font-cinzel text-[#3E2723] text-3xl mb-3"
             style={{ fontFamily: "Cinzel, serif" }}
           >
-            Order Confirmed!
+            Order Placed!
           </h1>
           <p className="text-[#5D4037] mb-2" style={{ fontFamily: "Lora, serif" }}>
-            Thank you for your order. Todd will begin work on your pieces shortly.
+            Your order has been recorded. To finalize your purchase, please complete your payment via Venmo.
           </p>
+          
+          <div className="bg-white border border-[#D7CCC8] rounded-lg p-6 my-6">
+            <h2 className="font-cinzel text-[#3E2723] text-xl mb-4" style={{ fontFamily: "Cinzel, serif" }}>
+              Complete Payment
+            </h2>
+            <p className="text-sm text-[#8D6E63] mb-6" style={{ fontFamily: "Inter, sans-serif" }}>
+              Please send <strong>{formatPrice(paymentAmount)}</strong> to <strong>@MrToddWoodcrafts</strong>. 
+              Include your order number (<strong>#{orderNumber}</strong>) in the payment note.
+            </p>
+            
+            <a 
+              href={`https://venmo.com/?txn=pay&audience=private&recipients=MrToddWoodcrafts&amount=${(paymentAmount / 100).toFixed(2)}&note=Order%20%23${orderNumber}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center w-full py-3.5 bg-[#008CFF] text-white font-semibold text-sm tracking-widest uppercase rounded hover:bg-[#0074D4] transition-colors mb-4"
+              style={{ fontFamily: "Inter, sans-serif" }}
+            >
+              Pay now with Venmo
+            </a>
+            
+            <p className="text-[11px] text-[#8D6E63] italic" style={{ fontFamily: "Inter, sans-serif" }}>
+              We will begin work on your pieces as soon as payment is verified.
+            </p>
+          </div>
+
           <div className="bg-white border border-[#D7CCC8] rounded-lg p-6 my-6 text-left">
             <p className="text-xs font-semibold tracking-widest uppercase text-[#8D6E63] mb-1" style={{ fontFamily: "Inter, sans-serif" }}>
               Order Number
@@ -133,12 +162,13 @@ export default function Checkout() {
               Estimated shipping: 3–7 business days (made-to-order pieces: 2–4 weeks).
             </p>
           </div>
+          
           <Link
             href="/shop"
-            className="inline-flex items-center gap-2 px-8 py-3.5 bg-[#3E2723] text-[#D7CCC8] font-semibold text-sm tracking-widest uppercase rounded hover:bg-[#5D4037] transition-colors"
+            className="inline-block mt-4 text-sm font-semibold tracking-widest uppercase text-[#3E2723] hover:text-[#C9A227] transition-colors"
             style={{ fontFamily: "Inter, sans-serif" }}
           >
-            Continue Shopping
+            ← Return to Shop
           </Link>
         </div>
       </div>
@@ -373,7 +403,7 @@ export default function Checkout() {
                     Note on Payment
                   </p>
                   <p>
-                    This site currently processes orders manually. After placing your order, Todd will contact you within 24 hours to arrange payment via Venmo, PayPal, or check.
+                    We process payments manually via Venmo. After clicking "Place Order," your order will be saved, and you will be provided a direct link to pay.
                   </p>
                 </div>
 
