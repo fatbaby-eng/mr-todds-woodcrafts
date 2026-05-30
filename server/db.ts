@@ -375,7 +375,7 @@ export async function seedSiteContent() {
   if (!db) throw new Error("DB unavailable");
 
   const existing = await db.select().from(siteContent);
-  if (existing.length > 0) return;
+  const existingKeys = new Set(existing.map((e) => e.key));
 
   const defaultContent: InsertSiteContent[] = [
     // General
@@ -391,6 +391,8 @@ export async function seedSiteContent() {
     { key: "home_about_title", label: "Home About Title", value: "Generations of Craft", category: "Home", type: "text" },
     { key: "home_about_text", label: "Home About Text", value: "Every spoon, knife, and board is carved with precision and care, honoring the natural beauty of the wood.", category: "Home", type: "textarea" },
     { key: "home_about_image", label: "Home About Image", value: "/mrtodd-logo.jpg", category: "Home", type: "image" },
+    { key: "home_cta_title", label: "Home CTA Title", value: "Free Shipping on Orders Over $75", category: "Home", type: "text" },
+    { key: "home_cta_text", label: "Home CTA Text", value: "Every order ships carefully packaged from Omaha, Nebraska. Made-to-order pieces ship within 2 weeks.", category: "Home", type: "textarea" },
     // About
     { key: "about_story_title", label: "Our Story Title", value: "Started with\nFour Trees", category: "About", type: "text" },
     { key: "about_story_text", label: "Our Story Text", value: "Mr. Todd's Workshop started with trees that died in a yard in southeast Omaha. Two cherry and two apricot, planted by my mother-in-law about 35 years ago, taken down slowly by a nearby walnut. When the trees finally came down I could not bring myself to haul the wood off as firewood.\n\nI have cut down three of the four. The last apricot is still standing, dead, waiting.\n\nThe first piece was a cane for her. The second was a baby toy. After that the work just kept going.\n\nHand tools mostly. Food-safe oil finishes. The grain decides as much as the maker does. No two pieces come out the same, and they aren't meant to be.\n\nRun out of a workshop in Omaha, Nebraska, by Todd Boswell. Designer by trade, carver by accident.", category: "About", type: "textarea" },
@@ -400,5 +402,8 @@ export async function seedSiteContent() {
     { key: "contact_text", label: "Contact Description", value: "Have a question or custom request? Reach out to us below.", category: "Contact", type: "textarea" },
   ];
 
-  await db.insert(siteContent).values(defaultContent);
+  const missingContent = defaultContent.filter((c) => !existingKeys.has(c.key));
+  if (missingContent.length > 0) {
+    await db.insert(siteContent).values(missingContent);
+  }
 }

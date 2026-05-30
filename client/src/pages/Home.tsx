@@ -232,10 +232,10 @@ export default function Home() {
             className="text-[#3E2723] text-2xl md:text-3xl font-cinzel mb-4"
             style={{ fontFamily: "Cinzel, serif" }}
           >
-            Free Shipping on Orders Over $75
+            {content.home_cta_title || "Free Shipping on Orders Over $75"}
           </h2>
           <p className="text-[#5D4037] mb-8 max-w-md mx-auto" style={{ fontFamily: "Lora, serif" }}>
-            Every order ships carefully packaged from Omaha, Nebraska. Made-to-order pieces ship within 2 weeks.
+            {content.home_cta_text || "Every order ships carefully packaged from Omaha, Nebraska. Made-to-order pieces ship within 2 weeks."}
           </p>
           <Link
             href="/shop"

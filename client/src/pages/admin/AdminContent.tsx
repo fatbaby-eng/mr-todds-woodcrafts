@@ -57,6 +57,8 @@ export default function AdminContent() {
       const { url } = await uploadImage.mutateAsync({ filename: file.name, contentType: file.type, dataUrl });
       
       handleValueChange(key, url);
+      await updateMutation.mutateAsync({ key, value: url });
+      refetch();
       toast.success("Image uploaded!");
     } catch {
       toast.error("Failed to upload image.");
